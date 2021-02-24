@@ -1,0 +1,29 @@
+{
+  "name": "direct-sdk-client-js-example-angularjs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "start": "concurrent \"npm run watch\" \"npm run browsersync\" ",
+    "build:sass": "node-sass -o ./ --include-path node_modules/bootstrap-sass/assets/stylesheets/  app/",
+    "postinstall": "npm run build:sass",
+    "browsersync": "browser-sync --server --port 3000 --watch --files='./**/*.{html,htm,css,js}' --ignore 'node_modules'",
+    "watch:sass": "npm run build:sass && node-sass -o ./ -w app/ --include-path node_modules/bootstrap-sass/assets/stylesheets/",
+    "watch": "npm run watch:sass"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "angular": "^1.7.9",
+    "angular-route": "^1.7.8",
+    "angular-ui-bootstrap": "^2.5.0",
+    "angular-ui-mask": "^1.8.6",
+    "bootstrap-sass": "^3.4.1",
+    "direct-sdk-client-js": "^1.0.0"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.26.3",
+    "concurrently": "^2.2.0",
+    "node-sass": "^4.11.0"
+  }
+}

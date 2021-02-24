@@ -1,0 +1,19 @@
+{
+  "name": "direct-sdk-client-js-example-browserify",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "start": "npm run lite",
+    "lite": "lite-server"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^13.1.0",
+    "direct-sdk-client-js": "^1.0.0"
+  },
+  "devDependencies": {
+    "lite-server": "^2.2.2"
+  }
+}

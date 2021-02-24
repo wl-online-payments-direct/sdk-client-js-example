@@ -1,0 +1,11 @@
+{
+  "name": "direct-sdk-client-js-example-prototypejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "direct-sdk-client-js": "^1.0.0"
+  }
+}
