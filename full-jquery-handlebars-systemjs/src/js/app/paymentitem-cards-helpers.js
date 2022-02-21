@@ -7,17 +7,17 @@ var Handlebars = require('handlebars');
  */
 $(function () {
 	// declare a namespace in the window for references
-	window.direct = window.direct || {};
+	window.onlinepayments = window.onlinepayments || {};
 
 	/**
-	 * Add helpers for usage with handlebars. Use {@link direct@addHandleBarsHelpers} to setup the helpers
+	 * Add helpers for usage with handlebars. Use {@link onlinepayments@addHandleBarsHelpers} to setup the helpers
 	 */
-	direct.addHandleBarsHelpers = function (session) {
+	onlinepayments.addHandleBarsHelpers = function (session) {
 		// a handlebars helper that shows the needed Account on File properties
 		Handlebars.registerHelper("showAoFProperties", function (items, options) {
 			var that = this;
 			var output = "";
-			var accountOnFile = new directsdk.AccountOnFile(that);
+			var accountOnFile = new onlinepaymentssdk.AccountOnFile(that);
 			var displayHints = accountOnFile.displayHints;
 
 			for (var j = 0, jl = displayHints.labelTemplate.length; j < jl; j++) {
@@ -48,11 +48,11 @@ $(function () {
 	};
 
 	/**
-	 * Adds non-simple validators. Use {@link direct#addValidators} to add the validators.
+	 * Adds non-simple validators. Use {@link onlinepayments#addValidators} to add the validators.
 	 *
 	 * @param {object} paymentItem - The paymentItem on which to bind the validations
 	 */
-	direct.addValidators = function (paymentItem) {
+	onlinepayments.addValidators = function (paymentItem) {
 
 		// The payment product defines a set of data restrictions per field. We need to add functionality to
 		// our pages. In our case we use jQuery validator as the library to actually do these validations.
@@ -127,11 +127,11 @@ $(function () {
 	};
 
 	/**
-	 * Update the masks in fields. Use {@link direct#updateFieldMask} to apply the mask to all visible fields
+	 * Update the masks in fields. Use {@link onlinepayments#updateFieldMask} to apply the mask to all visible fields
 	 *
 	 * @param {object} paymentItem - The paymentItem to apply masking to
 	 */
-	direct.updateFieldMask = function (paymentItem) {
+	onlinepayments.updateFieldMask = function (paymentItem) {
 		$("input").each(function () {
 			// We look for the SDK mask that is defined on the payment product field. If it exists we add the formatter
 			// logic to the field so any time the user changes the field's value the formatter nicely formats it.
@@ -149,11 +149,11 @@ $(function () {
 	};
 
 	/**
-	 * Updates the view of a paymentProduct. Use {@link direct#updatePaymentProduct} to update.
+	 * Updates the view of a paymentProduct. Use {@link onlinepayments#updatePaymentProduct} to update.
 	 *
 	 * @param {object} paymentProduct - The paymentProduct to use to update the view
 	 */
-	direct.updatePaymentProduct = function (paymentProduct) {
+	onlinepayments.updatePaymentProduct = function (paymentProduct) {
 		// A - Update the logo
 		if (paymentProduct.displayHints.logo) {
 			$("#cardNumber").parent().find(".cc-image").html('<img src="' + paymentProduct.displayHints.logo + '">').show();
@@ -169,7 +169,7 @@ $(function () {
 	};
 
 	/**
-	 * Handles the support for cobrands. Use {@link direct@handleCobrands} to add support for cobrands to a paymentItem.
+	 * Handles the support for cobrands. Use {@link onlinepayments@handleCobrands} to add support for cobrands to a paymentItem.
 	 *
 	 * @param {object} paymentItem - The paymentItem that could have cobrands
 	 * @param {object} iinDetailsResponse - The response from the iinDetails.
@@ -177,7 +177,7 @@ $(function () {
 	 * @param {object} session - the paymentSession which can be used to get new paymentItems
 	 * @param {object} paymentDetails - the paymentContext used to determine which paymentItems can be used
 	 */
-	direct.handleCobrands = function (paymentItem, iinDetailsResponse, paymentRequest, session, paymentDetails) {
+	onlinepayments.handleCobrands = function (paymentItem, iinDetailsResponse, paymentRequest, session, paymentDetails) {
 		if (iinDetailsResponse.coBrands && _numberOfCardsAllowedInContext(iinDetailsResponse.coBrands) > 1) {
 			var source = $("#cobrands-template").html();
 			var template = Handlebars.compile(source);
@@ -215,7 +215,7 @@ $(function () {
 					$("#cobrand .cobrand-wrapper").hide();
 
 					// use this new paymentProduct to set-up the new view
-					direct.updatePaymentProduct(paymentProduct);
+					onlinepayments.updatePaymentProduct(paymentProduct);
 				});
 			});
 		} else {
@@ -223,9 +223,9 @@ $(function () {
 		}
 	};
 	/**
-	 * Hides and reset the cobranding block on the page. Use {@link direct#hideCobranding} to use.
+	 * Hides and reset the cobranding block on the page. Use {@link onlinepayments#hideCobranding} to use.
 	 */
-	direct.hideCobranding = function () {
+	 onlinepayments.hideCobranding = function () {
 		$("#cobrand").hide();
 		$("#cobrand .toggle-cobrand").show();
 		$("#cobrand .cobrand-wrapper").hide();
@@ -323,7 +323,7 @@ $(function () {
 	 * @param {object} paymentItem - the paymentItem that has the updated validators.
 	 */
 	function _updateAllValidators(paymentItem) {
-		direct.addValidators(paymentItem);
+		onlinepayments.addValidators(paymentItem);
 		var fields = paymentItem.paymentProductFields;
 		$.each(fields, function () {
 			var field = this;

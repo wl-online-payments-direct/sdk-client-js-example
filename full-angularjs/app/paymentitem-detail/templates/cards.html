@@ -3,7 +3,7 @@
     <div class="hasIcon">
         <input name="cardholderName" id="cardholderName" placeholder="{{paymentitem.paymentProductFieldById['cardholderName'].displayHints.placeholderLabel}}"
             class="form-control" ng-model="item['cardholderName']" ng-attr-ui-mask="{{paymentitem.paymentProductFieldById['cardholderName'].displayHints.uimask}}"
-            ng-attr-direct-validation="paymentitem" ui-options="maskoptions" ng-attr-required="paymentitem.paymentProductFieldById['cardholderName'].dataRestrictions.isRequired"
+            ng-attr-onlinepayments-validation="paymentitem" ui-options="maskoptions" ng-attr-required="paymentitem.paymentProductFieldById['cardholderName'].dataRestrictions.isRequired"
             ui-mask-placeholder-char="space" ui-mask-placeholder ng-model-options="{ allowInvalid: true }" ng-if="!paymentitem.paymentProductFieldById['cardholderName'].aofField">
         <input name="cardholderName" id="cardholderName" class="form-control" ng-if="paymentitem.paymentProductFieldById['cardholderName'].aofField"
             ng-model="item['cardholderName']" disabled>
@@ -19,7 +19,7 @@
     <div class="hasIcon">
         <input name="cardNumber" id="cardNumber" placeholder="{{paymentitem.paymentProductFieldById['cardNumber'].displayHints.placeholderLabel}}"
             class="form-control" ng-model="item['cardNumber']" ng-attr-ui-mask="{{paymentitem.paymentProductFieldById['cardNumber'].displayHints.uimask}}"
-            ng-attr-direct-card-number="cardNumber" ng-attr-direct-validation="paymentitem" ui-options="maskoptions"
+            ng-attr-onlinepayments-card-number="cardNumber" ng-attr-onlinepayments-validation="paymentitem" ui-options="maskoptions"
             ng-attr-required="paymentitem.paymentProductFieldById['cardNumber'].dataRestrictions.isRequired" ui-mask-placeholder-char="space" ui-mask-placeholder
             ng-model-options="{ allowInvalid: true }" ng-if="!paymentitem.paymentProductFieldById['cardNumber'].aofField">
         <input name="cardNumber" id="cardNumber" class="form-control" ng-if="paymentitem.paymentProductFieldById['cardNumber'].aofField"
@@ -67,7 +67,7 @@
     <div class="hasIcon">
         <input name="expiryDate" id="expiryDate" placeholder="{{paymentitem.paymentProductFieldById['expiryDate'].displayHints.placeholderLabel}}"
             class="form-control" ng-model="item['expiryDate']" ng-attr-ui-mask="{{paymentitem.paymentProductFieldById['expiryDate'].displayHints.uimask}}"
-            ng-attr-direct-validation="paymentitem" ui-options="maskoptions" ng-attr-required="paymentitem.paymentProductFieldById['expiryDate'].dataRestrictions.isRequired"
+            ng-attr-onlinepayments-validation="paymentitem" ui-options="maskoptions" ng-attr-required="paymentitem.paymentProductFieldById['expiryDate'].dataRestrictions.isRequired"
             ui-mask-placeholder-char="space" ui-mask-placeholder ng-model-options="{ allowInvalid: true }" ng-if="!paymentitem.paymentProductFieldById['expiryDate'].aofField">
         <input name="expiryDate" id="expiryDate" class="form-control" ng-if="paymentitem.paymentProductFieldById['expiryDate'].aofField"
             ng-model="item['expiryDate']" disabled>
@@ -84,7 +84,7 @@
     <div class="hasIcon">
         <input name="cvv" id="cvv" placeholder="{{paymentitem.paymentProductFieldById['cvv'].displayHints.placeholderLabel}}"
             class="form-control" ng-model="item['cvv']" ng-attr-ui-mask="{{paymentitem.paymentProductFieldById['cvv'].displayHints.uimask}}"
-            ng-attr-direct-validation="paymentitem" ui-options="maskoptions" ng-attr-required="paymentitem.paymentProductFieldById['cvv'].dataRestrictions.isRequired"
+            ng-attr-onlinepayments-validation="paymentitem" ui-options="maskoptions" ng-attr-required="paymentitem.paymentProductFieldById['cvv'].dataRestrictions.isRequired"
             ui-mask-placeholder-char="space" ui-mask-placeholder ng-model-options="{ allowInvalid: true }" ng-if="!paymentitem.paymentProductFieldById['cvv'].aofField">
         <input name="cvv" id="cvv" class="form-control" ng-if="paymentitem.paymentProductFieldById['cvv'].aofField"
             ng-model="item['cvv']" disabled>

@@ -1,6 +1,6 @@
 {
-  "name": "direct-sdk-client-js-example-jquery",
-  "version": "1.0.1",
+  "name": "onlinepayments-sdk-client-js-example-jquery",
+  "version": "2.0.0",
   "description": "",
   "main": "index.html",
   "scripts": {
@@ -15,7 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "bootstrap-sass": "^3.4.1",
-    "direct-sdk-client-js": "^1.0.0",
+    "onlinepayments-sdk-client-js": "^2.0.0",
     "handlebars": "^4.1.1",
     "jquery": "^3.2.1",
     "jquery-validation": "^1.19.0",

@@ -1,4 +1,4 @@
-var direct = require('direct-sdk-client-js/dist/directsdk.noEncrypt');
+var onlinepayments = require('onlinepayments-sdk-client-js/dist/onlinepaymentssdk.noEncrypt');
 
 var sessionDetails = {
     assetUrl: "",
@@ -17,7 +17,7 @@ var paymentDetails = {
 
 var cardNumber = '4567 3500 0042 7977';
 
-var session = new direct(sessionDetails);
+var session = new onlinepayments(sessionDetails);
 
 createPayload(session, cardNumber, paymentDetails);
 

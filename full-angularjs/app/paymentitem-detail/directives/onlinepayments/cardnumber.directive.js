@@ -1,15 +1,15 @@
-angular.module('direct.cardnumber', []).directive('directCardNumber', function () {
+angular.module('onlinepayments.cardnumber', []).directive('onlinepaymentsCardNumber', function () {
     return {
         priority: 101,
         require: 'ngModel',
         restrict: 'A',
-        compile: function directCardnumberCompilingFunction() {
+        compile: function onlinepaymentsCardnumberCompilingFunction() {
 
             var $scope;
 
-            return function directCardnumberLinkingFunction(scope, iElement, iAttrs, controller) {
+            return function onlinepaymentsCardnumberLinkingFunction(scope, iElement, iAttrs, controller) {
                 $scope = scope.$parent.$parent.$parent.$parent.$parent; // this is the paymentitem.controller
-                if (iAttrs.directCardNumber === 'cardNumber') {
+                if (iAttrs.onlinepaymentsCardNumber === 'cardNumber') {
                     $scope.$watch(function () {
                         return controller.$$rawModelValue;
                     }, function (value) {
@@ -44,7 +44,7 @@ angular.module('direct.cardnumber', []).directive('directCardNumber', function (
             }
 
             function getIinDetails(value) {
-                $scope.direct.session.getIinDetails(value, $scope.direct.paymentDetails).then(function (response) {
+                $scope.onlinepayments.session.getIinDetails(value, $scope.onlinepayments.paymentDetails).then(function (response) {
                     $scope.$apply(function () {
                         $scope.iinDetails = response;
                         $scope.ccstate = response.status;

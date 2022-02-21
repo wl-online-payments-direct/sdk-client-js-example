@@ -1,6 +1,6 @@
-# Direct Client SDK Examples
+# Online Payments Client SDK Examples
 
-This repository contains all SDK examples for the [Ingenico Direct JavaScript Client SDK](https://support.direct.ingenico.com/documentation/sdk/mobile/javascript/).
+This repository contains all SDK examples for the Online Payments JavaScript Client SDK.
 Refer to the README in each folder for more details about that specific example.
 
 ## Full vs. minimal

@@ -1,6 +1,6 @@
 var $ = require('jQuery');
 window.forge = require('node-forge');
-var directSDK = require('directsdk.session');
+var onlinepaymentsSDK = require('onlinepaymentssdk.session');
 var Handlebars = require('handlebars');
 require('jquery-validation');
 require('bootstrap');
@@ -115,7 +115,7 @@ $(function () {
         }
 
         // 2) Add validators to each of the fields in the form
-        direct.addValidators(paymentItem);
+        onlinepayments.addValidators(paymentItem);
 
         // 3) Add submit handling for when the user finishes filling out the form
         // After the customer is done filling out the form he submits it. But instead of sending the form to the server
@@ -177,7 +177,7 @@ $(function () {
         //    input plugin, or write your own. In this example we use jquery formatter plugin, which is included in this file at the
         //    bottom.
 
-        direct.updateFieldMask(paymentItem);
+        onlinepayments.updateFieldMask(paymentItem);
 
         // D) The creditcard field has an IIN lookup that determines the issuer of the card. It could be the case that the customer chose
         //    payment product VISA but entered a mastercard creditcard number. In that case the selected payment product should switch.
@@ -193,7 +193,7 @@ $(function () {
                 // We use the SDK to do the IIN lookup, this is an async task that we provide you as a promise
                 session.getIinDetails($(this).val(), paymentDetails).then(function (response) {
                     // The promise has fulfilled.
-                    direct.hideCobranding();
+                    onlinepayments.hideCobranding();
                     // if this new creditcard is supported you can show the new logo in the helper element
                     if (response.status === "SUPPORTED") {
                         //Remove notAllowedInContext class so validator succeeds if there was a SUPPORTED_BUT_NOT_ALLOWED response before
@@ -203,11 +203,11 @@ $(function () {
                         session.getPaymentProduct(response.paymentProductId, paymentDetails).then(function (paymentProduct) {
                             // The promise has fulfilled.
                             //update field Mask in case a different cardnumber is filled in
-                            direct.updateFieldMask(paymentProduct);
+                            onlinepayments.updateFieldMask(paymentProduct);
                             // update the paymentproduct in the request
                             paymentRequest.setPaymentProduct(paymentProduct);
-                            direct.updatePaymentProduct(paymentProduct);
-                            direct.handleCobrands(paymentProduct, response, paymentRequest, session, paymentDetails);
+                            onlinepayments.updatePaymentProduct(paymentProduct);
+                            onlinepayments.handleCobrands(paymentProduct, response, paymentRequest, session, paymentDetails);
                         });
 
                     } else if (response.status === "EXISTING_BUT_NOT_ALLOWED") {
@@ -309,7 +309,7 @@ $(function () {
         isRecurring: context.isRecurring,
         currency: context.currency
     }
-    var session = new directSDK(sessionDetails);
+    var session = new onlinepaymentsSDK(sessionDetails);
     var paymentRequest = session.getPaymentRequest();
 
     var search = document.location.search;

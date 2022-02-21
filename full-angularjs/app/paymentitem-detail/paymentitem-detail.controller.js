@@ -32,14 +32,14 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
         if ($scope.paymentitem && $scope.paymentitem.id === id) {
             $rootScope.loading = false;
         } else {
-            $scope.direct.session.getPaymentProduct(id, $scope.direct.paymentDetails).then(function (paymentProduct) {
+            $scope.onlinepayments.session.getPaymentProduct(id, $scope.onlinepayments.paymentDetails).then(function (paymentProduct) {
                 $rootScope.loading = false;
                 $scope.$apply(function () {
                     $scope.paymentitem = paymentProduct;
                     $scope.fixMask();
                     $scope.createHtmlTooltips();
 
-                    $scope.direct.paymentRequest.setPaymentProduct(paymentProduct);
+                    $scope.onlinepayments.paymentRequest.setPaymentProduct(paymentProduct);
                     $scope.encryptIfNofields();
 
                     if ($scope.aofId) {
@@ -65,7 +65,7 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
     $scope.handleAccountOnFile = function () {
         // store account on file in request
         var accountOnFile = isNaN($scope.aofId) ? null : $scope.paymentitem.accountOnFileById[$scope.aofId];
-        $scope.direct.paymentRequest.setAccountOnFile(accountOnFile);
+        $scope.onlinepayments.paymentRequest.setAccountOnFile(accountOnFile);
         // prefill data
         angular.forEach(accountOnFile.attributes, function (attribute) {
             if ($scope.paymentitem.paymentProductFieldById[attribute.key]) {
@@ -96,8 +96,8 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
 
     $scope.startApplePay = function () {
         var networks = $scope.paymentitem.paymentProduct302SpecificData.networks;
-        $scope.direct.session.createApplePayPayment($scope.direct.paymentDetails, $scope.direct.paymentProductSpecificInputs.applePay, networks).then(function (res) {
-            var request = $scope.direct.session.getPaymentRequest();
+        $scope.onlinepayments.session.createApplePayPayment($scope.onlinepayments.paymentDetails, $scope.onlinepayments.paymentProductSpecificInputs.applePay, networks).then(function (res) {
+            var request = $scope.onlinepayments.session.getPaymentRequest();
             request.setValue('encryptedPaymentData', res.data.paymentData.data)
             encrypt()
         }, function (res) {
@@ -113,7 +113,7 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
 
 
     $scope.getPaymentProduct = function (id) {
-        return $scope.direct.session.getPaymentProduct(id, $scope.direct.paymentDetails);
+        return $scope.onlinepayments.session.getPaymentProduct(id, $scope.onlinepayments.paymentDetails);
     };
 
     $scope.toggleCobrands = function () {
@@ -143,7 +143,7 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
     $scope.doPayment = function () {
         $scope.doValidate = true;
         // check if all mandatory fields are present
-        var request = $scope.direct.session.getPaymentRequest();
+        var request = $scope.onlinepayments.session.getPaymentRequest();
 
         if ($scope.showLookupFields && !$scope.lookupModel) {
             return;
@@ -186,7 +186,7 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
     $scope.shouldShowRememberMe = function () {
         var ret = false;
         if ($scope.paymentitem && $scope.paymentitem.id === 'cards') {
-            if ($scope.direct.paymentDetails.isRecurring) {
+            if ($scope.onlinepayments.paymentDetails.isRecurring) {
                 // recurring groups show the checkbox
                 ret = true;
             }
@@ -200,8 +200,8 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
     }
 
     var encrypt = function () {
-        var encryptor = $scope.direct.session.getEncryptor();
-        var paymentRequest = $scope.direct.session.getPaymentRequest();
+        var encryptor = $scope.onlinepayments.session.getEncryptor();
+        var paymentRequest = $scope.onlinepayments.session.getPaymentRequest();
         $rootScope.encryptedString = null;
         if (paymentRequest.isValid()) {
             $rootScope.loading = true;
@@ -231,18 +231,18 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
 
     var context = JSON.parse(sessionStorage.getItem('context'));
     if (context) {
-        $scope.direct = {}; // store all directSDK variables in this namespace
+        $scope.onlinepayments = {}; // store all Online Payments SDK variables in this namespace
 
 
 
         // split the context up in the session- and paymentDetails
-        $scope.direct.sessionDetails = {
+        $scope.onlinepayments.sessionDetails = {
             clientSessionId: context.clientSessionId,
             customerId: context.customerId,
             clientApiUrl: context.clientApiUrl,
             assetUrl: context.assetUrl
         };
-        $scope.direct.paymentDetails = {
+        $scope.onlinepayments.paymentDetails = {
             totalAmount: context.amountInCents,
             countryCode: context.countryCode,
             locale: context.locale,
@@ -250,7 +250,7 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
             currency: context.currencyCode
         }
 
-        $scope.direct.paymentProductSpecificInputs = {
+        $scope.onlinepayments.paymentProductSpecificInputs = {
             applePay: {
                 merchantName: context.merchantName
             },
@@ -259,13 +259,13 @@ app.controller('paymentitem.controller', ['$rootScope', '$scope', '$location', '
         $rootScope.hasSession = true; // this indicates we have enough info to render a payment result page
 
         // use the sessionDetails to create a new session
-        $scope.direct.session = new directsdk.Session($scope.direct.sessionDetails);
+        $scope.onlinepayments.session = new onlinepaymentssdk.Session($scope.onlinepayments.sessionDetails);
 
         // Get the paymentRequest for this session. This is an SDK object that stores all the data
         // that the customer provided during the checkout. In the end of the checkout it will provide
         // all this information to the encryption function so that it can create the encrypted string
         // that contains all this info.
-        $scope.direct.paymentRequest = $scope.direct.session.getPaymentRequest();
+        $scope.onlinepayments.paymentRequest = $scope.onlinepayments.session.getPaymentRequest();
         // now render the page
         $scope.getPaymentItem();
     } else {

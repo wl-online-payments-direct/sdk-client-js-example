@@ -7,14 +7,14 @@ var Handlebars = require('handlebars');
  */
 $(function () {
 	// declare a namespace in the window for references
-	window.direct = window.direct || {};
+	window.onlinepayments = window.onlinepayments || {};
 
 	/**
-	 * Adds non-simple validators. Use {@link direct#addValidators} to add the validators.
+	 * Adds non-simple validators. Use {@link onlinepayments#addValidators} to add the validators.
 	 *
 	 * @param {object} paymentItem - The paymentItem on which to bind the validations
 	 */
-	direct.addValidators = function (paymentItem) {
+	 onlinepayments.addValidators = function (paymentItem) {
 
 		// The payment product defines a set of data restrictions per field. We need to add functionality to
 		// our pages. In our case we use jQuery validator as the library to actually do these validations.
@@ -77,11 +77,11 @@ $(function () {
 	};
 
 	/**
-	 * Update the masks in fields. Use {@link direct#updateFieldMask} to apply the mask to all visible fields
+	 * Update the masks in fields. Use {@link onlinepayments#updateFieldMask} to apply the mask to all visible fields
 	 *
 	 * @param {object} paymentItem - The paymentItem to apply masking to
 	 */
-	direct.updateFieldMask = function (paymentItem) {
+	 onlinepayments.updateFieldMask = function (paymentItem) {
 		$("input").each(function () {
 			// We look for the SDK mask that is defined on the payment product field. If it exists we add the formatter
 			// logic to the field so any time the user changes the field's value the formatter nicely formats it.
@@ -99,11 +99,11 @@ $(function () {
 	};
 
 	/**
-	 * Updates the view of a paymentProduct. Use {@link direct#updatePaymentProduct} to update.
+	 * Updates the view of a paymentProduct. Use {@link onlinepayments#updatePaymentProduct} to update.
 	 *
 	 * @param {object} paymentProduct - The paymentProduct to use to update the view
 	 */
-	direct.updatePaymentProduct = function (paymentProduct) {
+	 onlinepayments.updatePaymentProduct = function (paymentProduct) {
 		// A - Add new fields to the view
 		_addFields(paymentProduct);
 		// B - Remove unused fields from view
@@ -225,7 +225,7 @@ $(function () {
 	 * @param {object} paymentItem - the paymentItem that has the updated validators.
 	 */
 	function _updateAllValidators(paymentItem) {
-		direct.addValidators(paymentItem);
+		onlinepayments.addValidators(paymentItem);
 		var fields = paymentItem.paymentProductFields;
 		$.each(fields, function () {
 			var field = this;

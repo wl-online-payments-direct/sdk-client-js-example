@@ -19,6 +19,6 @@ if (sessionDetails.clientSessionId === null || sessionDetails.customerId === nul
 }
 var cardNumber = '4567 3500 0042 7977';
 
-var session = new directsdk.Session(sessionDetails);
+var session = new onlinepaymentssdk.Session(sessionDetails);
 
 createPayload(session, cardNumber, paymentDetails);

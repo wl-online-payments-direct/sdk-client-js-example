@@ -1,4 +1,4 @@
-var app = angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.mask', 'direct.validation', 'direct.cardnumber']);
+var app = angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.mask', 'onlinepayments.validation', 'onlinepayments.cardnumber']);
 
 app.config(['$routeProvider', function ($routeProvider) {
     $routeProvider.when('/paymentitem-selection', {

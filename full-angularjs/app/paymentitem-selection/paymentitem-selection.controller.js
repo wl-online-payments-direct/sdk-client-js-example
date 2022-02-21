@@ -14,10 +14,10 @@ app.controller('paymentitem-selection.controller', ['$scope', '$rootScope', '$lo
         $scope.hasError = false;
         $scope.loading = true;
         // Third parameter paymentProductSpecificInputs is optional
-        $scope.direct.session.getBasicPaymentItems($scope.direct.paymentDetails, false, $scope.direct.paymentProductSpecificInputs).then(function (basicPaymentItems) {
+        $scope.onlinepayments.session.getBasicPaymentItems($scope.onlinepayments.paymentDetails, false, $scope.onlinepayments.paymentProductSpecificInputs).then(function (basicPaymentItems) {
             $scope.loading = false;
 
-            // since the direct sdk has async calls outside of angular we need to tell Angular to dirty-check the state after the async call is complete.
+            // since the Online Payments sdk has async calls outside of angular we need to tell Angular to dirty-check the state after the async call is complete.
             $scope.$apply(function () {
                 // sort the paymentitems here
                 $scope.basicPaymentItems = basicPaymentItems.basicPaymentItems.sort(function (a, b) {
@@ -46,8 +46,8 @@ app.controller('paymentitem-selection.controller', ['$scope', '$rootScope', '$lo
     };
 
     var encryptPayment = function (paymentResponse) {
-        var encryptor = $scope.direct.session.getEncryptor();
-        var paymentRequest = $scope.direct.session.getPaymentRequest();
+        var encryptor = $scope.onlinepayments.session.getEncryptor();
+        var paymentRequest = $scope.onlinepayments.session.getPaymentRequest();
         $rootScope.encryptedString = null;
         if (paymentRequest.isValid()) {
             $rootScope.loading = true;
@@ -84,7 +84,7 @@ app.controller('paymentitem-selection.controller', ['$scope', '$rootScope', '$lo
     };
 
     $scope.showAccountOnFileData = function (accountOnFile) {
-        var accountOnFileObject = new directsdk.AccountOnFile(accountOnFile);
+        var accountOnFileObject = new onlinepaymentssdk.AccountOnFile(accountOnFile);
         var displayHints = accountOnFileObject.displayHints;
         var output = "";
         for (var j = 0, jl = displayHints.labelTemplate.length; j < jl; j++) {
@@ -97,7 +97,7 @@ app.controller('paymentitem-selection.controller', ['$scope', '$rootScope', '$lo
     var addLogosToAoF = function () {
         angular.forEach($scope.accountsOnFile, function (aof) {
             var paymentProductId = aof.paymentProductId;
-            $scope.direct.session.getPaymentProduct(paymentProductId, $scope.direct.paymentDetails).then(function (paymentProduct) {
+            $scope.onlinepayments.session.getPaymentProduct(paymentProductId, $scope.onlinepayments.paymentDetails).then(function (paymentProduct) {
                 $scope.$apply(function () {
                     aof.displayHints = aof.displayHints || {};
                     aof.displayHints.logo = paymentProduct.displayHints.logo;
@@ -107,36 +107,36 @@ app.controller('paymentitem-selection.controller', ['$scope', '$rootScope', '$lo
     };
 
     if (context) {
-        $scope.direct = {}; // store all directSDK variables in this namespace
+        $scope.onlinepayments = {}; // store all Online Payments SDK variables in this namespace
 
         // split the context up in the session- and paymentDetails
-        $scope.direct.sessionDetails = {
+        $scope.onlinepayments.sessionDetails = {
             clientSessionId: context.clientSessionId,
             customerId: context.customerId,
             clientApiUrl: context.clientApiUrl,
             assetUrl: context.assetUrl
         };
-        $scope.direct.paymentDetails = {
+        $scope.onlinepayments.paymentDetails = {
             totalAmount: context.amountInCents,
             countryCode: context.countryCode,
             locale: context.locale,
             isRecurring: context.isRecurring,
             currency: context.currencyCode
         };
-        $scope.direct.paymentProductSpecificInputs = {
+        $scope.onlinepayments.paymentProductSpecificInputs = {
             applePay: {
                 merchantName: context.merchantName
             }
         };
 
         // use the sessionDetails to create a new session
-        $scope.direct.session = new directsdk.Session($scope.direct.sessionDetails);
+        $scope.onlinepayments.session = new onlinepaymentssdk.Session($scope.onlinepayments.sessionDetails);
 
         // Get the paymentRequest for this session. This is an SDK object that stores all the data
         // that the customer provided during the checkout. In the end of the checkout it will provide
         // all this information to the encryption function so that it can create the encrypted string
         // that contains all this info.
-        $scope.direct.paymentRequest = $scope.direct.session.getPaymentRequest();
+        $scope.onlinepayments.paymentRequest = $scope.onlinepayments.session.getPaymentRequest();
 
         // now render the page
         $scope.getPaymentItems();

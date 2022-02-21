@@ -1,6 +1,6 @@
 var $ = require('jQuery');
 window.forge = require('node-forge');
-var directSDK = require('directsdk.session');
+var onlinepaymentsSDK = require('onlinepaymentssdk.session');
 var Handlebars = require('handlebars');
 var applePayId = 302;
 require('jquery-validation');
@@ -136,7 +136,7 @@ $(function () {
     }
 
     // 2) Add validators to each of the fields in the form
-    direct.addValidators(paymentItem);
+    onlinepayments.addValidators(paymentItem);
 
     // 3) Add submit handling for when the user finishes filling out the form
 
@@ -220,7 +220,7 @@ $(function () {
     //    input plugin, or write your own. In this example we use jquery formatter plugin, which is included in this file at the
     //    bottom.
 
-    direct.updateFieldMask(paymentItem);
+    onlinepayments.updateFieldMask(paymentItem);
   }
 
 
@@ -271,7 +271,7 @@ $(function () {
       merchantName: context.merchantName
     },
   }
-  var session = new directSDK(sessionDetails);
+  var session = new onlinepaymentsSDK(sessionDetails);
   var paymentRequest = session.getPaymentRequest();
 
   var search = document.location.search;

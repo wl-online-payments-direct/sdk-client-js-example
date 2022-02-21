@@ -1,5 +1,5 @@
 window.forge = require('node-forge');
-var direct = require('directsdk.session');
+var onlinepayments = require('onlinepaymentssdk.session');
 
 var sessionDetails = {
     clientSessionId: "",
@@ -18,6 +18,6 @@ var paymentDetails = {
 
 var cardNumber = '4567 3500 0042 7977';
 
-var session = new direct(sessionDetails);
+var session = new onlinepayments(sessionDetails);
 
 createPayload(session, cardNumber, paymentDetails);

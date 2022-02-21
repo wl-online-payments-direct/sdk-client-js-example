@@ -1,6 +1,6 @@
 var $ = require('jQuery');
 window.forge = require('node-forge');
-var direct = require('directsdk.session');
+var onlinepayments = require('onlinepaymentssdk.session');
 var handlebars = require('handlebars');
 var cardHelpers = require('./paymentitem-cards-helpers');
 
@@ -25,10 +25,10 @@ $(function () {
     };
     var paymentProductSpecificInputs = {
     };
-    var session = new direct(sessionDetails);
+    var session = new onlinepayments(sessionDetails);
     var paymentRequest = session.getPaymentRequest();
 
-    window.direct.addHandleBarsHelpers(session);
+    window.onlinepayments.addHandleBarsHelpers(session);
 
     function isPaymentProductIdInList (paymentProductId, list) {
         return list.filter(function (paymentItem) {

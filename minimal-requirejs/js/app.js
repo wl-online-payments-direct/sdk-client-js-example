@@ -1,4 +1,4 @@
-requirejs(["directsdk.Session", "config"], function (sdksession, config) {
+requirejs(["onlinepaymentssdk.Session", "config"], function (sdksession, config) {
     var sessionDetails = {
         clientSessionId: config.clientSessionId || null,
         customerId: config.customerId || null,

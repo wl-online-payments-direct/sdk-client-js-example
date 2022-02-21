@@ -1,6 +1,6 @@
 {
-  "name": "direct-sdk-client-js-example-webpack",
-  "version": "1.0.1",
+  "name": "onlinepayments-sdk-client-js-example-webpack",
+  "version": "2.0.0",
   "description": "",
   "main": "index.html",
   "scripts": {
@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "direct-sdk-client-js": "^1.0.0"
+    "onlinepayments-sdk-client-js": "^2.0.0"
   },
   "devDependencies": {
     "html-webpack-plugin": "^3.2.0",

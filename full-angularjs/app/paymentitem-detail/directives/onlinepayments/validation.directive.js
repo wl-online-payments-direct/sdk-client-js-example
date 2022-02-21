@@ -1,11 +1,11 @@
-angular.module('direct.validation', []).directive('directValidation', function () {
+angular.module('onlinepayments.validation', []).directive('onlinepaymentsValidation', function () {
     return {
         priority: 100,
         require: 'ngModel',
         restrict: 'A',
-        compile: function directValidationCompilingFunction() {
+        compile: function onlinepaymentsValidationCompilingFunction() {
 
-            return function directValidationLinkingFunction(scope, iElement, iAttrs, controller) {
+            return function oninepaymentsValidationLinkingFunction(scope, iElement, iAttrs, controller) {
                 var addValidations = function (field) {
                     /* Add validators based on the dataRestrictions */
                     angular.forEach(field.dataRestrictions.validationRules, function (validationRule) {
@@ -20,7 +20,7 @@ angular.module('direct.validation', []).directive('directValidation', function (
                 }
                 var field = scope.paymentitem.paymentProductFieldById[scope.paymentItemFieldId || scope.paymentItemfield.id]
 
-                scope.$watch(iAttrs.directValidation, function (n, o) {
+                scope.$watch(iAttrs.onlinepaymentsValidation, function (n, o) {
                     if (n !== o) {
                         field = scope.paymentitem.paymentProductFieldById[scope.paymentItemFieldId || scope.paymentItemfield.id];
                         addValidations(field);
