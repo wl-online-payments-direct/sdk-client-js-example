@@ -1,6 +1,6 @@
 {
   "name": "onlinepayments-sdk-client-js-example-angularjs",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "",
   "main": "index.html",
   "scripts": {
@@ -19,7 +19,7 @@
     "angular-ui-bootstrap": "^2.5.0",
     "angular-ui-mask": "^1.8.6",
     "bootstrap-sass": "^3.4.1",
-    "onlinepayments-sdk-client-js": "^2.0.0"
+    "onlinepayments-sdk-client-js": "^3.0.1"
   },
   "devDependencies": {
     "browser-sync": "^2.26.3",

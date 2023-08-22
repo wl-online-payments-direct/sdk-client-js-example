@@ -1,11 +1,11 @@
 {
   "name": "onlinepayments-sdk-client-js-example-prototypejs",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "",
   "main": "index.html",
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "onlinepayments-sdk-client-js": "^2.0.0"
+    "onlinepayments-sdk-client-js": "^3.0.1"
   }
 }
