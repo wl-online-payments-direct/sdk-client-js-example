@@ -1,4 +1,4 @@
-function createPayload(session, cardNumber, paymentDetails) {
+module.exports = function createPayload(session, cardNumber, paymentDetails) {
   session.getIinDetails(cardNumber, paymentDetails).then(function(iinDetailsResponse) {
     if (iinDetailsResponse.status !== 'SUPPORTED') {
       console.error('Card check error: ' + iinDetailsResponse.status);
@@ -37,4 +37,4 @@ function createPayload(session, cardNumber, paymentDetails) {
     console.error('Failed getting IinDetails, check your credentials');
     document.querySelector('.output').innerText = 'Something went wrong, check the console for more information.';
   });
-}
+};

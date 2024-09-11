@@ -5,7 +5,13 @@
   "main": "index.html",
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "start": "lite-server"
+  },
   "dependencies": {
-    "onlinepayments-sdk-client-js": "^3.0.1"
+    "onlinepayments-sdk-client-js": "^2.0.1"
+  },
+  "devDependencies": {
+    "lite-server": "^2.2.2"
   }
 }

@@ -1,5 +1,8 @@
 # systemjs Online Payments Client SDK Example
 
+🚨 Please note that this example is only compatible with SDK versions up to major version 2.
+To see how to include version 3+, please refer to the minimal vite-esm or webpack example.
+
 ## What is it?
 
 This example shows you how to load the Online Payments JavaScript Client SDK with the systemjs module loader.

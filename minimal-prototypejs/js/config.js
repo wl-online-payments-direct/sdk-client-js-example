@@ -1,6 +1,6 @@
-var config = {
-    clientSessionId: null,
-    customerId: null,
-    clientApiUrl: null,
-    assetUrl: null
+const config = {
+    clientSessionId: '',
+    customerId: '',
+    clientApiUrl: '',
+    assetUrl: '',
 }

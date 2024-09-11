@@ -1,8 +1,12 @@
 # jQuery / Handlebars Online Payments Client SDK Example
 
+🚨 Please note that this example is only compatible with SDK versions up to major version 2.
+To learn how to work with the SDK version 3 and up, please refer to the documentation on https://docs.direct.worldline-solutions.com/en/integration/how-to-integrate/client-sdks/javascript.
+
 ## What is it?
 
-This application is a jQuery / Handlebars implementation of an Online Payments checkout process. You can use this application as a base for your own jQuery intergrated Online Payments powered payment solution.
+This application is a jQuery / Handlebars implementation of an Online Payments checkout process. 
+You can use this application as a base for your own jQuery integrated Online Payments powered payment solution.
 It offers all features of the Online Payments Responsives Payment Pages (RPP), including
 * payment product selection
 * payment product detail pages
@@ -10,7 +14,8 @@ It offers all features of the Online Payments Responsives Payment Pages (RPP), i
 * payment product switching based on IIN Lookup
 
 and more.
-The Online Payments JavaScript Client SDK is used for all communication to the Online Payments API and crypto. A simple webserver is included to make this application easy to install and run in development environments.
+The Online Payments JavaScript Client SDK is used for all communication to the Online Payments API and crypto. 
+A simple webserver is included to make this application easy to install and run in development environments.
 
 ## How to install
 
@@ -21,17 +26,20 @@ Make sure you have installed [Node.js](https://nodejs.org/en/); the LTS version 
 ## How to start the application
 
 Run the following command to start a webserver on `localhost` at port `3000` with [browsersync](https://www.browsersync.io/).
-This will also start a watcher for the [sass](http://sass-lang.com/) files that auto compile to CSS; after each change the page is automaticly reloaded for you on all connected devices.
+This will also start a watcher for the [sass](http://sass-lang.com/) files that auto compile to CSS; after each change the page is automatically reloaded for you on all connected devices.
 
     npm run start
 
-When the webserver has started it will automaticly load a page in which you have to provide details about the Online Payments client session and the payment details. This page is for example and development purposes only. Notice that the URL contains the `dev-` prefix indicating is a development page. In your production application this information is used to initialize the application.
-The final page of the payment journey has a `dev-` prefix as well and contains the encrypted string containing all information that you need to send to Online Payments to forfill the payment.
+When the webserver has started it will automatically load a page in which you have to provide details about the Online Payments client session and the payment details. 
+This page is for example and development purposes only. Notice that the URL contains the `dev-` prefix indicating is a development page. 
+In your production application this information is used to initialize the application.
+The final page of the payment journey has a `dev-` prefix as well and contains the encrypted string containing all information that you need to send to Online Payments to for-fill the payment.
 
 ## How to start the payment process
 
 Create a client session identifier and a customer identifier, which the Client API needs for authentication purposes.
-These can be obtained by your e-commerce server using the Server SDKs or directly using the Server API. Use this information along with the clientApiUrl and assetUrl of the Client API you want to direct to and the payment details to start the process.
+These can be obtained by your e-commerce server using the Server SDKs or directly using the Server API. 
+Use this information along with the clientApiUrl and assetUrl of the Client API you want to direct to and the payment details to start the process.
 If you incorporate this into your production process all this information should be used to initialize the payment process.
 
 ## In depth
@@ -48,7 +56,7 @@ This application uses the following key frameworks and libraries which are manag
 
 * npm run build:sass - builds all css files; once
 * npm run browsersync - starts the webserver with browser-sync
-* npm run postinstall - automaticly run after install (clean&build:sass)
+* npm run postinstall - automatically run after install (clean&build:sass)
 * npm run watch:sass - watch sass changes
 
 ### Folder structure

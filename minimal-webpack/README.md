@@ -10,35 +10,47 @@ The Online Payments SDK is used for all communication to the Online Payments API
 
 Make sure you have installed [Node.js](https://nodejs.org/en/); the LTS version is recommended. Run
 
-    npm install
-
-Get a copy of [forge](https://github.com/digitalbazaar/forge/) and build it following the guide on GitHub. You have to use this build since forge is incompatible with module loaders at the moment.
-Place the minified version in `dist/js`. A forge package is included in this example but you should update it to the latest version.
+```bash
+npm install
+```
 
 ## How to start the payment process
 
 Create a client session identifier and a customer identifier, which the Client API needs for authentication purposes.
-These can be obtained by your e-commerce server using the Server SDKs or directly using the Server API. Use this information along with the geographical region of the Client API you want to direct to and the payment details to start the process.
+These can be obtained by your e-commerce server using the Server SDKs or directly using the Server API. 
+Use this information along with the geographical region of the Client API you want to direct to and the payment details to start the process.
 If you incorporate this into your production process all this information should be used to initialize the payment process.
 
-In `app.js` you include the sessiondetails, this is the only file that is webpack specific. See `create-payload.js` on how to set-up the actual payment request which is the same for all module loaders.
+Create an environment file `.env` with the following variable names:
 
-You can test if you have done it right by running:
-    npm start
+```dotenv
+ASSET_URL="xxx"
+CLIENT_API_URL="xxx"
+CLIENT_SESSION_ID="xxx"
+CUSTOMER_ID="xxx"
+```
+
+Replace `xxx` with correct values from the session details.
+Once these env variables are set, you'll be able to start Webpack dev-server by running command:
+
+```bash
+npm start
+```
 
 ### Folder structure
 
 ```
-+-- dist
-|   +-- js
-|       -- app.bundle.js - the example app bundled with webpack
-|       -- create-payload.js - generic code which provides an example on how the SDK works, this is common for all minimal examples.
-|       -- forge.min.js - the encryption library; self packed since it's incompatible with webpack. Please update this file to the latest version.
 +-- node_modules
 |   ... folder containing all node dependencies; run npm install to get the dependencies
 +-- src
-|   +-- js
-|       +-- app.js - the example app itself.
+|   -- app.ts - Entry point of the application
+|   -- create-payload.ts - generic code which provides an example on how the SDK works
+|   -- get-supoported-iin-details.ts - helper function to get IinDetailsResponse instance only when status is `"SUPPORTED"`
+|   -- promise-with-error.ts - helper function to wrap a promise and override the error message if is being rejected
+|   -- global.d.ts - declaration merging of global process environment variables
+|   -- types.ts - shared types
+|-- tsconfig.json - TypeScript configuration file
 |-- index.html - html page as start page
 |-- webpack.config.js - the webpack config file
 ```
+

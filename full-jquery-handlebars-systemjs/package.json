@@ -14,8 +14,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bootstrap-sass": "^3.4.1",
-    "onlinepayments-sdk-client-js": "^3.0.1",
+    "bootstrap-sass": "3.3.7",
+    "onlinepayments-sdk-client-js": "^2.0.1",
     "handlebars": "^4.1.1",
     "jquery": "^3.2.1",
     "jquery-validation": "^1.19.0",
@@ -25,6 +25,6 @@
   "devDependencies": {
     "browser-sync": "^2.26.3",
     "concurrently": "^2.2.0",
-    "node-sass": "^4.11.0"
+    "node-sass": "^9.0.0"
   }
 }

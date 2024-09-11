@@ -4,13 +4,12 @@
   "description": "",
   "main": "index.html",
   "scripts": {
-    "start": "npm run lite",
-    "lite": "lite-server"
+    "start": "lite-server"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "onlinepayments-sdk-client-js": "^3.0.1",
+    "onlinepayments-sdk-client-js": "^2.0.1",
     "systemjs": "^0.19.36",
     "node-forge": "^0.6.42"
   },
