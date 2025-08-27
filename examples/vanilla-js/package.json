@@ -1,0 +1,22 @@
+{
+  "name": "full-vanilla-js",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "concurrently \"vite\" \"yarn watch-styles\"",
+    "build": "vite build",
+    "copy-design": "node ./../../scripts/copy-design.js ./design/images",
+    "copy-styles": "npx sass ./../../design/styles/index.scss:./design/styles/index.css",
+    "watch-styles": "yarn copy-styles --watch",
+    "postinstall": "yarn copy-design & yarn copy-styles"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "sass": "1.83.4",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "onlinepayments-sdk-client-js": "^3.4.0"
+  }
+}

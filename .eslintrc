@@ -1,0 +1,32 @@
+{
+    "extends": [
+        "standard",
+        "plugin:prettier/recommended",
+        "prettier"
+    ],
+    "env": {
+        "node": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 2020,
+        "ecmaFeatures": {
+            "legacyDecorators": true,
+            "jsx": true
+        }
+    },
+    "rules": {
+        "space-before-function-paren": 0,
+        "import/export": 0,
+        "no-unused-vars": "off",
+        "no-unused-expressions": "off",
+        "function-call-argument-newline": [
+            "warn",
+            "consistent"
+        ],
+        "linebreak-style": [
+            0,
+            "error",
+            "windows"
+        ]
+    }
+}

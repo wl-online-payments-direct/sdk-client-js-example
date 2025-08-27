@@ -1,4 +1,0 @@
-dist/js/app.bundle.*
-node_modules/
-npm-debug*
-package-lock.json

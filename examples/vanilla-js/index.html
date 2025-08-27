@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="/design/images/favicon.ico" />
+  <link rel="stylesheet" href="/design/styles/index.css" />
+  <script src="https://pay.google.com/gp/p/js/pay.js"></script>
+  <title>Online payments Javascript SDK example app</title>
+</head>
+<body>
+<header class="main-header small">
+  <a class="button link" href="#/">Home</a>
+  <div class="flex row center">
+    <span>Choose theme: </span>
+    <button type="button" role="switch" id="theme-switcher">
+      <span>
+        <svg class="dark" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M7 10C7 7.80357 8.75266 6 10.9084 6C11.1187 6 11.4342 6.03571 11.627 6.07143C11.8023 6.10714 11.8373 6.33929 11.6796 6.42857C10.7332 6.98214 10.1373 8.01786 10.1373 9.14286C10.1373 11.1071 11.8724 12.5893 13.7828 12.2321C13.958 12.1964 14.0632 12.3929 13.958 12.5357C13.2219 13.4464 12.1178 14 10.9084 14C8.75266 14 7 12.2143 7 10Z"
+              fill="#007B7C">
+            </path>
+        </svg>
+        <svg class="light" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="Group 464">
+              <path id="Vector"
+                    d="M10 12C11.1046 12 12 11.1046 12 10C12 8.89543 11.1046 8 10 8C8.89543 8 8 8.89543 8 10C8 11.1046 8.89543 12 10 12Z"
+                    stroke="#007B7C"
+                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              <path id="z" d="M10 5V4" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+              <path id="Vector_2" d="M10 16V15" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+              <path id="Vector_3" d="M15 10H16" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+              <path id="Vector_4" d="M4 10H5" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+              <path id="Vector_5" d="M13 13L14 14" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+              <path id="Vector_6" d="M6 6L7 7" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+              <path id="Vector_7" d="M13 7L14 6" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+              <path id="Vector_8" d="M6 14L7 13" stroke="#007B7C" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round"></path>
+            </g>
+        </svg>
+      </span>
+    </button>
+  </div>
+</header>
+<div id="app" class="flex"></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

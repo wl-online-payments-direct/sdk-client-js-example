@@ -1,0 +1,17 @@
+[data-theme='dark'] {
+    --color-text: #efefef;
+    --color-background: #01274b;
+    --color-overlay-background: rgba(255, 255, 255, 0.2);
+    --color-panel-background: rgb(229, 231, 235, 0.05);
+    --color-border-light: #9f9f9f;
+    --color-error: #ef5050;
+}
+
+[data-theme='light'] {
+    --color-text: #222222;
+    --color-background: #f2f2f2;
+    --color-overlay-background: rgba(0, 0, 0, 0.2);
+    --color-panel-background: #ffffff;
+    --color-border-light: #9f9f9f;
+    --color-error: #ef5050;
+}

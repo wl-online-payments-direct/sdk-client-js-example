@@ -1,0 +1,4 @@
+/cert
+/data
+/node_modules
+.env

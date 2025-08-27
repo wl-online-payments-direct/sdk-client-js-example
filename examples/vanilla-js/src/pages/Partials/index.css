@@ -1,0 +1,20 @@
+#paymentDetailsFormExpandButton {
+    display: none;
+    width: 75px;
+    align-self: flex-end;
+}
+
+#paymentDetailsFormExpandButton.show {
+    display: block;
+}
+
+#paymentDetailsForm {
+    overflow: hidden;
+    max-height: 600px;
+    transition: all 0.2s linear;
+}
+
+#paymentDetailsForm.collapse {
+    max-height: 0;
+    padding: 0;
+}

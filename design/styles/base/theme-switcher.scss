@@ -1,0 +1,39 @@
+#theme-switcher {
+    border-radius: 20px;
+    width: 44px;
+    border: 2px solid #364050;
+    background-color: #364050;
+    padding: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+
+    span {
+        display: block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #fff;
+        transition: transform 0.3s;
+
+        .dark {
+            display: none;
+        }
+
+        .light {
+            display: block;
+        }
+    }
+
+    &[data-value='dark'] {
+        span {
+            transform: translateX(20px);
+            .dark {
+                display: block;
+            }
+
+            .light {
+                display: none;
+            }
+        }
+    }
+}

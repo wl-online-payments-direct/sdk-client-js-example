@@ -1,0 +1,23 @@
+{
+  "name": "mock-api",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "start": "nodemon --delay 1 ./src/server.js",
+    "clean": "rm -rf node_modules/"
+  },
+  "keywords": [],
+  "author": "",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "json-server": "^0.17.0",
+    "lowdb": "^1.0.0",
+    "onlinepayments-sdk-nodejs": "^6.0.2",
+    "pem": "^1.14.8",
+    "selfsigned": "^2.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.2"
+  }
+}

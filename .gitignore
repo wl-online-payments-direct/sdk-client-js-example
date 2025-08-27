@@ -1,6 +1,4 @@
 debug.log
 npm-debug.log
-.idea/
-*.iml
 .env
-
+/node_modules

@@ -1,0 +1,8 @@
+.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: 0.5rem;
+    padding: 0.5rem 2rem;
+    border-bottom: 1px solid var(--color-border-light);
+}
