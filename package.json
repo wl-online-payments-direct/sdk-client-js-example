@@ -1,16 +1,27 @@
 {
   "name": "javascript-sdk-example",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Online Payments JavaScript SDK example apps",
   "repository": "git@github.com:Online-Payments/sdk-client-js-example",
   "author": "Online Payments",
   "license": "MIT",
   "private": true,
+  "workspaces": [
+    "shared",
+    "examples/react",
+    "examples/svelte",
+    "examples/vue",
+    "examples/angular",
+    "mock-api"
+  ],
   "scripts": {
     "start-api": "cd mock-api && yarn && yarn start",
     "start-vanilla": "cd examples/vanilla-js && yarn && yarn start"
   },
   "devDependencies": {
     "prettier": "^3.6.2"
+  },
+  "dependencies": {
+    "onlinepayments-sdk-client-js": "^3.5.0"
   }
 }

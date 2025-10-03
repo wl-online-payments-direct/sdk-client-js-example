@@ -1,12 +1,14 @@
-const path = require('path');
-const fs = require('fs');
-const https = require('https');
-const jsonServer = require('json-server');
+/* eslint-disable */
+import path from 'path';
+import fs from 'fs';
+import https from 'https';
+import jsonServer from 'json-server';
+import dotenv from 'dotenv';
+import { setup } from './config.js';
+import { setRoutes } from './routes.js';
 
-require('dotenv').config();
-require('./config').setup();
-
-const { setRoutes } = require('./routes.js');
+dotenv.config();
+setup();
 
 const keyFile = path.resolve('./cert/cert.key');
 const certFile = path.resolve('./cert/cert.pem');

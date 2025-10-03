@@ -9,10 +9,10 @@
   },
   "devDependencies": {
     "prettier": "^3.0.3",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7"
   },
   "dependencies": {
-    "onlinepayments-sdk-client-js": "^3.1.1"
+    "onlinepayments-sdk-client-js": "^3.4.0"
   }
 }

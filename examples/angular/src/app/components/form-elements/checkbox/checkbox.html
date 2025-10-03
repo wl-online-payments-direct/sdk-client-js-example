@@ -1,0 +1,14 @@
+<div class="field" [id]="id + 'Field'">
+  <label class="checkbox">
+    <input
+      type="checkbox"
+      [id]="id"
+      [name]="id"
+      [checked]="value"
+      [disabled]="disabled"
+      (change)="handleChange($event)"
+    />
+    <span></span>
+    <span>{{ label }}</span>
+  </label>
+</div>

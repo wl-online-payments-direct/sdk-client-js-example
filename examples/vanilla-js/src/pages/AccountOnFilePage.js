@@ -2,7 +2,7 @@
 import * as sdk from 'onlinepayments-sdk-client-js';
 
 import Logo from '../components/Logo.js';
-import StorageService from '../utilities/StorageService.js';
+import StorageService from '../services/StorageService.js';
 import Pages from '../constants/pages.js';
 import FormField from '../components/FormField.js';
 import Loader from '../components/Loader.js';
@@ -100,8 +100,10 @@ const AccountOnFilePage = () => {
         e.stopPropagation();
 
         const paymentRequest = PaymentRequestUtility.get(paymentProduct, 'cvv', form.elements['cvv']?.value ?? '');
+        paymentRequest.setAccountOnFile(accountOnFile);
 
         if (paymentRequest.isValid()) {
+            StorageService.setPaymentRequest(paymentRequest);
             StorageService.setCardPaymentSpecificData({
                 token: accountOnFile.id,
                 cvv: form.elements['cvv'].value,

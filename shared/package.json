@@ -1,0 +1,15 @@
+{
+  "name": "@javascript-sdk-example/shared",
+  "version": "1.0.0",
+  "description": "Shared services, utilities, and types for Worldline Direct JavaScript SDK examples",
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    "./services/*": "./services/*.ts",
+    "./utilities/*": "./utilities/*.ts",
+    "./types/*": "./types/*.ts",
+    "./constants/*": "./constants/*.ts"
+  },
+  "peerDependencies": {}
+}

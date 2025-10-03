@@ -1,0 +1,79 @@
+<ng-container>
+  <wl-logo></wl-logo>
+  <h1>Complete payment</h1>
+  <div class='form'>
+    <div class='label'>
+      Payment Request
+    </div>
+    <textarea
+      class='small'
+      rows='10'
+      aria-autocomplete='none'
+      aria-multiline='true'
+      autoCapitalize='off'
+      autoCorrect='off'
+      data-enable-grammarly='false'
+      data-gramm='false'
+      spellCheck='false'
+      [defaultValue]="getPaymentRequestInfo()"
+    ></textarea>
+    <ng-container>
+      <div class='label'>
+        {{ paymentData()?.type === 'raw' ? 'Payload:' : 'Encrypted string:' }}
+      </div>
+      <textarea
+        class='small'
+        rows='10'
+        aria-autocomplete='none'
+        aria-multiline='false'
+        autoCapitalize='off'
+        autoCorrect='off'
+        data-enable-grammarly='false'
+        data-gramm='false'
+        spellCheck='false'
+        [defaultValue]="paymentData()?.data"></textarea>
+    </ng-container>
+    @if (useMockApi) {
+      <button class='button primary' type='button' (click)="processPayment()">
+        Submit to Mock API
+      </button>
+    }
+    <div class='error'>{{ errorMessage() }}</div>
+    @if (!!paymentResponse()) {
+      <div>
+        <div class='label'>
+          Payment response:
+        </div>
+        <textarea
+          class='small'
+          rows='10'
+          aria-autocomplete='none'
+          aria-multiline='false'
+          autoCapitalize='off'
+          autoCorrect='off'
+          data-enable-grammarly='false'
+          data-gramm='false'
+          spellCheck='false'
+          [defaultValue]="paymentResponse()"></textarea>
+      </div>
+    }
+  </div>
+  <button class='button primary mt-1' type='button' (click)="handleRestartSession()">
+    Restart session
+  </button>
+  <div class='flex column start mt-1'>
+    <span>To learn more about creating payment, check the following links:</span>
+    <a class='button link'
+       target="_blank"
+       rel="noopener noreferrer"
+       href="https://docs.direct.worldline-solutions.com/en/api-reference#tag/Payments/operation/CreatePaymentApi">
+      Create Payment API documentation
+    </a>
+    <a class='button link'
+       target="_blank"
+       rel="noopener noreferrer"
+       href="https://docs.direct.worldline-solutions.com/en/integration/basic-integration-methods/server-to-server">
+      Server-to-server integration
+    </a>
+  </div>
+</ng-container>

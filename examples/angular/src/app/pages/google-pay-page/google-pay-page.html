@@ -1,0 +1,15 @@
+<ng-container>
+  <div class="flex column center m-0">
+    <wl-logo></wl-logo>
+    <h1 class="m-0">Pay with Google Pay</h1>
+    <p class="self-start m-0"><strong>
+      Total amount: {{ getFormattedAmount() }}
+      {{ getCurrency() }}
+    </strong></p>
+    <a routerLink="/payment" class="button link self-start">← Back to payment method selection</a>
+  </div>
+  <div class="form" #googlePayContainer></div>
+  @if (errorMessage()) {
+    <div class='error' id='errorMessage'>{{ errorMessage() }}</div>
+  }
+</ng-container>

@@ -1,0 +1,5 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Start mock API" type="NodeJSConfigurationType" path-to-js-file="src/server.js" working-dir="$PROJECT_DIR$/mock-api">
+    <method v="2" />
+  </configuration>
+</component>

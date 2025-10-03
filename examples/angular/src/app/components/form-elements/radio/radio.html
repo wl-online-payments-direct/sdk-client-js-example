@@ -1,0 +1,15 @@
+<div class="field" [class]="classes" [attr.id]="(id || '') + 'Field'">
+  <label class="radio" [attr.for]="id">
+    <input
+      type="radio"
+      [id]="id"
+      [name]="name"
+      [value]="value"
+      [checked]="checked"
+      [disabled]="disabled"
+      (change)="handleChange($event)"
+    />
+    <span></span>
+    <span>{{ label }}</span>
+  </label>
+</div>

@@ -2,7 +2,7 @@
 import * as sdk from 'onlinepayments-sdk-client-js';
 
 import FormField from '../../components/FormField.js';
-import StorageService from '../../utilities/StorageService.js';
+import StorageService from '../../services/StorageService.js';
 import Pages from '../../constants/pages.js';
 import countries from '../../constants/countries.js';
 import currencies from '../../constants/currencies.js';

@@ -1,11 +1,11 @@
 import * as sdk from 'onlinepayments-sdk-client-js';
 
-import StorageService from '../utilities/StorageService.js';
+import StorageService from '../services/StorageService.js';
 import Pages from '../constants/pages.js';
 import Loader from '../components/Loader.js';
 import Logo from '../components/Logo.js';
 import NumberFormatter from '../utilities/NumberFormatter.js';
-import EncryptionService from '../utilities/EncryptionService.js';
+import EncryptionService from '../services/EncryptionService.js';
 
 /**
  * A Google Pay page.
@@ -40,7 +40,7 @@ const GooglePayPage = () => {
                 <h1 class="m-0">Pay with Google Pay</h1>
                 <p class="self-start m-0"><strong>Total amount: ${NumberFormatter.formatAmount(paymentDetails.amountOfMoney)} ${paymentDetails.amountOfMoney.currencyCode}</strong></p>
                 <a href="${Pages.Payment}" class="button link self-start">← Back to payment method selection</a>
-                <div id="googlePay"></div>
+                <div id="googlePay" class="form flex column center"></div>
                 <div id="error" class="error"></div>
             </div>
         `;
@@ -83,6 +83,7 @@ const GooglePayPage = () => {
         if (paymentRequest.isValid()) {
             EncryptionService.encrypt(session, paymentRequest)
                 .then(() => {
+                    StorageService.setPaymentRequest(paymentRequest);
                     window.location.href = Pages.Finalize;
                 })
                 .catch((errors) => {
@@ -94,17 +95,17 @@ const GooglePayPage = () => {
     /**
      * Configures Google Pay via Payment Request Object and calls Google Pay Sheet
      *
-     @param {sdk.PaymentContext} paymentDetails - An object containing the payment details required to fetch payment products.
-     @param {sdk.PaymentProduct320SpecificDataJSON} paymentSpecificData - An object containing specific payment data used for Google Pay Request Object.
+     @param {sdk.PaymentContextWithAmount} paymentDetails - An object containing the payment details required to fetch payment products.
+     @param {sdk.PaymentProduct} paymentProduct - An object containing specific payment data used for Google Pay Request Object.
      */
-    const onGooglePayButtonClicked = (paymentDetails, paymentSpecificData) => {
+    const onGooglePayButtonClicked = (paymentDetails, paymentProduct) => {
         const paymentRequest = Object.assign({}, baseRequest, {
             allowedPaymentMethods: [
                 Object.assign({}, baseRequest.allowedPaymentMethods[0], {
                     tokenizationSpecification: {
                         type: 'PAYMENT_GATEWAY',
                         parameters: {
-                            gateway: paymentSpecificData.gateway,
+                            gateway: paymentProduct.paymentProduct320SpecificData.gateway,
                             gatewayMerchantId: 'DemoMerchant'
                         }
                     }
@@ -115,9 +116,9 @@ const GooglePayPage = () => {
             },
             transactionInfo: {
                 totalPriceStatus: 'FINAL',
-                totalPrice: NumberFormatter.formatAmount(paymentDetails.amountOfMoney),
+                totalPrice: NumberFormatter.formatAmountForGooglePay(paymentDetails.amountOfMoney),
                 currencyCode: paymentDetails.amountOfMoney.currencyCode,
-                countryCode: paymentDetails.countryCode
+                countryCode: paymentProduct.json.acquirerCountry || paymentDetails.countryCode
             }
         });
 
@@ -140,7 +141,7 @@ const GooglePayPage = () => {
         paymentRequest = new sdk.PaymentRequest();
         paymentRequest.setPaymentProduct(paymentProduct);
 
-        baseRequest = createBaseRequest(paymentProduct.json.paymentProduct320SpecificData.networks);
+        baseRequest = createBaseRequest(paymentProduct.paymentProduct320SpecificData.networks);
 
         paymentsClient = new google.payments.api.PaymentsClient({
             environment: 'TEST'
@@ -150,16 +151,16 @@ const GooglePayPage = () => {
             .isReadyToPay(baseRequest)
             .then((response) => {
                 if (response.result) {
+                    // noinspection JSUnusedGlobalSymbols
                     const button = paymentsClient.createButton({
-                        onClick: () =>
-                            onGooglePayButtonClicked(context, paymentProduct.json.paymentProduct320SpecificData)
+                        onClick: () => onGooglePayButtonClicked(context, paymentProduct)
                     });
                     document.getElementById('googlePay').appendChild(button);
                 }
             })
             .catch((err) => {
                 console.error(err);
-                document.getElementById('error').innerHTML = 'Error loading GooglePay Integration';
+                document.getElementById('error').innerHTML = 'Google Pay not ready.';
             });
     };
 

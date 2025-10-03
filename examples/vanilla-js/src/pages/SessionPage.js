@@ -1,10 +1,10 @@
 import * as sdk from 'onlinepayments-sdk-client-js';
 
-import ApiService from '../utilities/ApiService.js';
+import ApiService from '../services/ApiService.js';
 import Loader from '../components/Loader.js';
 import FormField from '../components/FormField.js';
 import Logo from '../components/Logo.js';
-import StorageService from '../utilities/StorageService.js';
+import StorageService from '../services/StorageService.js';
 import Pages from '../constants/pages.js';
 import { UseMockApi } from '../config.js';
 

@@ -1,0 +1,56 @@
+{
+  "name": "angular-example",
+  "description": "Online Payments JavaScript SDK Angular example app",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "ng": "ng",
+    "set-env": "node scripts/set-env.js",
+    "start": "yarn set-env && concurrently \"ng serve --open\" \"yarn watch-styles\"",
+    "build": "yarn set-env && ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "copy-design": "node ./../../scripts/copy-design.js src/assets/design/images",
+    "copy-styles": "npx sass ../../shared/design/styles/index.scss:./src/assets/design/styles/index.css",
+    "watch-styles": "yarn copy-styles --watch",
+    "postinstall": "yarn copy-design & yarn copy-styles"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "dependencies": {
+    "@angular/common": "^20.2.0",
+    "@angular/compiler": "^20.2.0",
+    "@angular/core": "^20.2.0",
+    "@angular/forms": "^20.2.0",
+    "@angular/platform-browser": "^20.2.0",
+    "@angular/router": "^20.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.2.0",
+    "@angular/cli": "^20.2.0",
+    "@angular/compiler-cli": "^20.2.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/node": "^22.13.3",
+    "concurrently": "^9.1.2",
+    "esbuild": "^0.25.9",
+    "jasmine-core": "~5.9.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.9.3"
+  }
+}

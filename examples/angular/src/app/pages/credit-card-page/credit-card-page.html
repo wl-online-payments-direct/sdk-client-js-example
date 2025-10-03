@@ -1,0 +1,69 @@
+<ng-container>
+  <div class="flex column center m-0">
+    <wl-logo></wl-logo>
+    <h1 class="m-0">Pay with a credit card</h1>
+    <p class="self-start m-0"><strong>
+      Total amount: {{ getFormattedAmount() }}
+      {{ getCurrency() }}
+    </strong></p>
+    <p class="self-start m-0">Selected card type: {{ paymentProduct?.json?.displayHints?.label }}</p>
+    <a routerLink="/payment" class="button link self-start">← Back to payment method selection</a>
+    <form [formGroup]="creditCardPayment" class="form" (ngSubmit)="handleProcessPayment()" #creditCardFormRef>
+      <wl-input formControlName="cardNumber" classes="field" id="card-number" label="Card number" required
+                [classes]="((creditCardPayment.get('cardNumber')?.touched && creditCardPayment.get('cardNumber')?.invalid && creditCardPayment.get('cardNumber')?.dirty) ? 'error ' : '')"
+                [maskProduct]="paymentProduct"
+                maskField="cardNumber">
+
+        >
+      </wl-input>
+      <div class="flex row">
+        <wl-input formControlName="expiryDate" label="Expiry date" id="expiry-date"
+                  required
+                  [classes]="((creditCardPayment.get('expiryDate')?.touched && creditCardPayment.get('expiryDate')?.invalid && creditCardPayment.get('expiryDate')?.dirty) ? 'error ' : '')"
+                  [maskProduct]="paymentProduct"
+                  maskField="expiryDate">
+          >
+        </wl-input>
+        @if (hasField('cvv')) {
+          <wl-input formControlName="cvv" label="Security code"
+                    id="cvv" type="number"
+                    required
+                    [classes]="((creditCardPayment.get('cvv')?.touched && creditCardPayment.get('cvv')?.invalid && creditCardPayment.get('cvv')?.dirty) ? 'error ' : '')"
+                    [maskProduct]="paymentProduct"
+                    maskField="cvv">
+            >
+          </wl-input>
+        }
+      </div>
+      <wl-input formControlName="cardholderName" label="Cardholder name" classes="field"
+                id="cardholderName"
+                required
+                [classes]="((creditCardPayment.get('cardholderName')?.touched && creditCardPayment.get('cardholderName')?.invalid && creditCardPayment.get('cardholderName')?.dirty) ? 'error ' : '')"
+                [maskProduct]="paymentProduct"
+                maskField="cardholderName">
+        >
+      </wl-input>
+      @if (paymentProduct?.allowsTokenization) {
+        <wl-checkbox
+          id="tokenizeField"
+          label="Remember card for later use"
+          formControlName="isRecurring"
+        ></wl-checkbox>
+      }
+      <button class="button primary" type="submit">Pay now</button>
+    </form>
+    @if (errorMessage()) {
+      <div class='error' id='errorMessage'>{{ errorMessage() }}</div>
+    }
+    @let amountOfMoney = paymentContext?.amountOfMoney;
+    @if (amountOfMoney?.amount) {
+      <additional-card-operations [amountOfMoney]="getAmountOfMoney()"
+                                  [session]="session"
+                                  [cardNumberError]="hasCardNumberError()"
+                                  [paymentProductId]="paymentProduct?.id"
+                                  [cardNumber]="getCardNumber()">
+
+      </additional-card-operations>
+    }
+  </div>
+</ng-container>

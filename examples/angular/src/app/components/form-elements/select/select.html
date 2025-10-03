@@ -1,0 +1,22 @@
+<div class="field" [attr.id]="id + 'Field'">
+  <label [attr.for]="id">{{ label }}</label>
+  <select
+    [id]="id"
+    [name]="id"
+    [required]="required"
+    [disabled]="disabled"
+    [class]="classes"
+    [value]="value"
+    (change)="handleChange($event)"
+    (blur)="handleBlur()"
+  >
+    @for (option of options; track option.value) {
+      <option
+        [value]="option.value"
+        [selected]="value === option.value"
+      >
+        {{ option.label }}
+      </option>
+    }
+  </select>
+</div>

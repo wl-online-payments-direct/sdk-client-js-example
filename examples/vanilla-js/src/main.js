@@ -5,7 +5,7 @@ import accountOnFilePage from './pages/AccountOnFilePage.js';
 import finalizePaymentPage from './pages/FinalizePaymentPage.js';
 import googlePayPage from './pages/GooglePayPage.js';
 import Pages from './constants/pages.js';
-import StorageService from './utilities/StorageService.js';
+import StorageService from './services/StorageService.js';
 
 const handleRouteChange = () => {
     renderPage(window.location.hash).then();

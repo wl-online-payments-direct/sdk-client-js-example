@@ -1,0 +1,23 @@
+<div [class]="'field ' + (classes || '')" [id]="id + 'Field'">
+  <label [for]="id">{{ label }}</label>
+  <input
+    [type]="type"
+    [id]="id"
+    [name]="id"
+    [value]="value"
+    [required]="required"
+    [disabled]="disabled"
+    [readOnly]="readonly"
+    (input)="handleInput($event)"
+    (blur)="handleTouch()"
+    [attr.placeholder]="placeholder"
+    aria-autocomplete="none"
+    aria-multiline="false"
+    autocapitalize="off"
+    autocorrect="off"
+    data-enable-grammarly="false"
+    data-gramm="false"
+    spellcheck="false"
+    [class]="classes"
+  />
+</div>

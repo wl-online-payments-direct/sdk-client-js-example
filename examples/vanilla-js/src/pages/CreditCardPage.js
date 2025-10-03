@@ -1,13 +1,13 @@
 // noinspection ES6UnusedImports
 import * as sdk from 'onlinepayments-sdk-client-js';
 import Logo from '../components/Logo.js';
-import StorageService from '../utilities/StorageService.js';
+import StorageService from '../services/StorageService.js';
 import Pages from '../constants/pages.js';
 import FormField from '../components/FormField.js';
 import Loader from '../components/Loader.js';
 import NumberFormatter from '../utilities/NumberFormatter.js';
 import PaymentRequestUtility from '../utilities/PaymentRequestUtility.js';
-import EncryptionService from '../utilities/EncryptionService.js';
+import EncryptionService from '../services/EncryptionService.js';
 
 /**
  * A credit card page.
@@ -86,10 +86,6 @@ const CreditCardPage = () => {
      * Uses the PaymentRequest object from the SDK to format (mask)
      */
     const setValidatorsAndFormatters = () => {
-        paymentProduct.paymentProductFieldById['expiryDate'].dataRestrictions.validationRuleByType[
-            'regularExpression'
-        ].regularExpression = '^(0[1-9]|1[0-2])(\\d{2})$';
-
         ['cardNumber', 'expiryDate', 'cvv', 'cardholderName'].forEach((key) => {
             const elem = getInput(key);
             // add formatting on input
@@ -157,6 +153,7 @@ const CreditCardPage = () => {
 
                     EncryptionService.encrypt(session, paymentRequest)
                         .then(() => {
+                            StorageService.setPaymentRequest(paymentRequest);
                             window.location.href = Pages.Finalize;
                         })
                         .catch((errors) => {

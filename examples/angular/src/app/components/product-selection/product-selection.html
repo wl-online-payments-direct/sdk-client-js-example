@@ -1,0 +1,14 @@
+<div class='flex-expand'>
+  <p class='text-left'>Select payment method:</p>
+  <div class="form" role="radiogroup">
+    @for (item of mappedItems(); track item.id) {
+      <app-radio
+        [name]="'product-selection'"
+        [value]="toString(item.id)"
+        [label]="item.label"
+        [checked]="isChecked(item.id)"
+        (onChange)="handleChange($event)"
+      ></app-radio>
+    }
+  </div>
+</div>

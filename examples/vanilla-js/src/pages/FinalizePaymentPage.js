@@ -1,9 +1,9 @@
 import Logo from '../components/Logo.js';
-import StorageService from '../utilities/StorageService.js';
+import StorageService from '../services/StorageService.js';
 import Pages from '../constants/pages.js';
 import { UseMockApi } from '../config.js';
 import Loader from '../components/Loader.js';
-import ApiService from '../utilities/ApiService.js';
+import ApiService from '../services/ApiService.js';
 
 /**
  * Represents the FinalizePaymentPage component, responsible for rendering the final payment page
@@ -27,6 +27,10 @@ const FinalizePaymentPage = () => {
                 ${Logo.render()}
                 <h1>Complete payment</h1>
                 <div class="form">
+                    <div class="label">Payment Request</div>
+                    <textarea class="small" rows="10" aria-autocomplete='none' aria-multiline="false"
+                            autoCapitalize='off' autoCorrect='off' data-enable-grammarly="false"
+                            data-gramm="false" spellCheck="false">${JSON.stringify(StorageService.getPaymentRequestValues(), null, 2)}</textarea>
                     <div class="label">${title}</div>
                     <textarea class="small" rows="10" aria-autocomplete='none' aria-multiline="false"
                             autoCapitalize='off' autoCorrect='off' data-enable-grammarly="false"
@@ -106,8 +110,8 @@ const FinalizePaymentPage = () => {
         } else {
             if (StorageService.getCardPaymentSpecificData()) {
                 mountingPoint.innerHTML = renderPage(
-                    'Object:',
-                    JSON.stringify(StorageService.getCardPaymentSpecificData())
+                    'Payload:',
+                    JSON.stringify(StorageService.getCardPaymentSpecificData(), null, 2)
                 );
             } else {
                 mountingPoint.innerHTML = renderPage('Encrypted string:', StorageService.getEncryptedData());

@@ -1,7 +1,7 @@
-const selfSigned = require('selfsigned');
-const fs = require('fs');
+import selfSigned from 'selfsigned';
+import fs from 'fs';
 
-const setup = () => {
+export const setup = () => {
     // server certificate
     if (!fs.existsSync('./cert/cert.key')) {
         if (!fs.existsSync('./cert')) {
@@ -25,8 +25,4 @@ const setup = () => {
     if (!fs.existsSync('./data/db.json')) {
         fs.writeFileSync('./data/db.json', '{\n  "tokens": []\n}', { encoding: 'utf8' });
     }
-};
-
-module.exports = {
-    setup
 };

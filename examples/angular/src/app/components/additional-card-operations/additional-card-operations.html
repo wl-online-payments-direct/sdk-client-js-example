@@ -1,0 +1,48 @@
+<ng-container>
+  <div class="additional-utils form">
+    <h3 class="m-0">Currency conversion</h3>
+    <p class="text-left">
+      This utility checks weather currency conversion can be applied for the given card.
+    </p>
+    <button class="button secondary small" (click)="handleClickCurrencyConversion()">
+      Get quote
+    </button>
+    @let currencyErrors = cardOperationsErrors().currencyConversions;
+    @if (currencyErrors.length) {
+      <div class="text-left error">
+        @for (error of currencyErrors; track $index) {
+          <div class="text">{{ error }}</div>
+        }
+      </div>
+    }
+    @let currencyConversions = cardOperations().currencyConversions;
+    <div class="field">
+      @for (conversion of currencyConversions; track $index) {
+        <div class="text">{{ conversion }}</div>
+      }
+    </div>
+  </div>
+  <div class="additional-utils form">
+    <h3 class="m-0">Calculate surcharge</h3>
+    <p class="text-left">
+      This utility calculates the surcharge for the given credit card, if enabled.
+    </p>
+    <button class="button secondary small" (click)="handleClickSurcharge()">
+      Calculate
+    </button>
+    @let surchargeErrors = cardOperationsErrors().surcharges;
+    <div class="text-left error">
+      @for (error of surchargeErrors; track $index) {
+        <div class="text">{{ error }}</div>
+      }
+    </div>
+    @let surcharges = cardOperations().surcharges;
+    @if (surcharges?.length) {
+      <div class="field">
+        @for (surcharge of surcharges; track $index) {
+          <div class="text">{{ surcharge }}</div>
+        }
+      </div>
+    }
+  </div>
+</ng-container>

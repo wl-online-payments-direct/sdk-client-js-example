@@ -13,7 +13,10 @@ Before starting the API for the first time, do the following:
 
 ## Start the API
 
-Run `yarn start` to start the API. It will start the API server at the address adn port specified in your `.env` file.
+Run `yarn start` to start the API. It will start the API server at the address and port specified in your `.env` file.
+
+Note that the server is stated with the self-signed certificate. Open the API URL in the browser and accept the risk
+before calling the API in the client code.
 
 ### Start parameters
 

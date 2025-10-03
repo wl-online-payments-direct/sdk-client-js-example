@@ -1,11 +1,13 @@
-const onlinePaymentsSdk = require('onlinepayments-sdk-nodejs');
-const low = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
-require('dotenv').config();
+import onlinePaymentsSdk from 'onlinepayments-sdk-nodejs';
+import { LowSync } from 'lowdb';
+import { JSONFileSync } from 'lowdb/node';
+import dotenv from 'dotenv';
 
-const adapter = new FileSync('./data/db.json');
+dotenv.config();
 
-const db = low(adapter);
+const adapter = new JSONFileSync('./data/db.json');
+const db = new LowSync(adapter, { tokens: [] });
+db.read();
 
 const config = {
     merchantId: process.env.MERCHANT_ID,
@@ -22,21 +24,20 @@ const sdk = onlinePaymentsSdk.init({
     secretApiKey: config.secretApiKey
 });
 
-const createSession = async (req, res) => {
+export const createSession = async (req, res) => {
     return new Promise((resolve) => {
         sdk.sessions
             .createSession(
                 config.merchantId,
                 {
-                    tokens: db.get('tokens').value() || []
+                    tokens: db.data.tokens || []
                 },
                 {}
             )
             .then((sdkResponse) => {
                 sdkResponse.body.invalidTokens?.forEach((token) => {
-                    db.get('tokens')
-                        .remove((t) => t === token)
-                        .write();
+                    db.data.tokens = db.data.tokens.filter((t) => t !== token);
+                    db.write();
                 });
 
                 resolve(res.status(sdkResponse.status).json(sdkResponse.body));
@@ -44,7 +45,7 @@ const createSession = async (req, res) => {
     });
 };
 
-const processPayment = (req, res) => {
+export const processPayment = (req, res) => {
     const paymentData = {
         order: {
             amountOfMoney: req.body.amountOfMoney,
@@ -112,14 +113,10 @@ const processPayment = (req, res) => {
     return new Promise((resolve) => {
         try {
             sdk.payments.createPayment(config.merchantId, paymentData, {}).then((sdkResponse) => {
-                if (sdkResponse.body.merchantAction?.actionType === 'REDIRECT') {
-                    db.get('redirections').add({ mac: sdkResponse.body.merchantAction.redirectData?.RETURNMAC });
-                }
-
                 const token = sdkResponse.body?.creationOutput?.token;
-                const tokens = db.get('tokens');
-                if (token && !tokens.find((t) => t === token).value()) {
-                    db.get('tokens').push(token).write();
+                if (token && !db.data.tokens.includes(token)) {
+                    db.data.tokens.push(token);
+                    db.write();
                 }
 
                 resolve(res.status(sdkResponse.status).json(sdkResponse.body));
@@ -130,8 +127,8 @@ const processPayment = (req, res) => {
     });
 };
 
-const getTokens = (req, res) => {
-    const tokens = db.get('tokens').value();
+export const getTokens = (req, res) => {
+    const tokens = db.data.tokens;
     const merchantId = req.params.merchantId;
     if (!tokens?.length) {
         return res.status(200).json([]);
@@ -159,8 +156,3 @@ const getTokens = (req, res) => {
     });
 };
 
-module.exports = {
-    createSession,
-    processPayment,
-    getTokens
-};

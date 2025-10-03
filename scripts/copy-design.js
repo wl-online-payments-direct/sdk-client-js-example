@@ -7,7 +7,7 @@ if (process.argv.length < 3) {
     return;
 }
 
-const sourceDir = path.resolve(__dirname, './../design/images');
+const sourceDir = path.resolve(__dirname, './../shared/design/images');
 const destinationDir = path.resolve(process.cwd(), process.argv[2]);
 console.log(`copying from ${sourceDir} to ${destinationDir}`);
 

@@ -34,7 +34,11 @@ const currenciesWithThreeDecimals = ['BHD', 'IQD', 'JOD', 'KWD', 'LYD', 'OMR', '
 /**
  * Utility for number formatting.
  *
- * @returns {{formatAmount: (function({amount: number, currencyCode: string}): string)}}
+ * * @returns {{
+ *  *   formatAmount: function({amount: number, currencyCode: string}): string,
+ *  *   formatAmountForGooglePay: function({amount: number, currencyCode: string}): string
+ *  * }}
+
  * @constructor
  */
 const NumberFormatter = () => {
@@ -43,6 +47,7 @@ const NumberFormatter = () => {
      *
      * @param {{amount: number, currencyCode: string}} money
      * @returns {string}
+
      */
     const formatAmount = (money) => {
         let decimals = 2;
@@ -62,8 +67,22 @@ const NumberFormatter = () => {
         return numberFormatter.format(decimals > 0 ? money.amount / Math.pow(10, decimals) : money.amount);
     };
 
+    /**
+     * Formats the amount of money for Google Pay.
+     *
+     * @param {{amount: number, currencyCode: string}} money
+     * @returns {string}
+
+     */
+    const formatAmountForGooglePay = (money) => {
+        const formattedAmount = formatAmount(money);
+
+        return formattedAmount.replace(/,/g, '');
+    };
+
     return {
-        formatAmount
+        formatAmount,
+        formatAmountForGooglePay
     };
 };
 

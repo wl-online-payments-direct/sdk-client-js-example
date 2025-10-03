@@ -1,0 +1,51 @@
+<ng-container>
+  <wl-logo></wl-logo>
+  <h1>Payment details</h1>
+  <p class="text-left">Order details:</p>
+  <button
+    class="button expand-button"
+    [class.show]="!isFormExpanded()"
+    type='button'
+    id='paymentDetailsFormExpandButton'
+    (click)="handleExpandCollapse()"
+  >
+    expand
+  </button>
+  <div>
+    <form [formGroup]="paymentContext" class="form" [class.collapse]="!isFormExpanded()" #paymentContextFormRef
+          (ngSubmit)="handleSaveContext()" id="paymentDetailsForm">
+      <ng-container formGroupName="amountOfMoney">
+        <wl-input formControlName="amount" label="Amount (in the smallest denomination)" id="amount"
+                  classes="field" type="number" required></wl-input>
+      </ng-container>
+      <wl-select formControlName="countryCode" label="Country" id="country" classes="field" required
+                 [options]="countryOptions"></wl-select>
+      <ng-container formGroupName="amountOfMoney">
+        <wl-select formControlName="currencyCode" label="Currency" classes="field" required
+                   [options]="currencyOptions"
+                   id="currency"
+        ></wl-select>
+      </ng-container>
+      <wl-checkbox
+        id="isRecurring"
+        label="Is recurring payment?"
+        formControlName="isRecurring"
+      ></wl-checkbox>
+      <button class="button primary" type="submit" title="title">Get payment methods</button>
+    </form>
+    <div class='flex row'>
+      @if (paymentMethods()?.basicPaymentItems; as items) {
+        @if (items.length > 0) {
+          <product-selection [items]="paymentMethods()!.basicPaymentItems" (onChange)="handleProductChange($event)">
+            >
+          </product-selection>
+        }
+      }
+      @if (paymentMethods()?.accountOnFileById && !!paymentMethods()?.accountsOnFile?.length) {
+        <account-on-file-selection [accountsOnFile]="getAccountsOnFileById()"
+                                   (onChange)="handleAccountOnFileChange($event)"></account-on-file-selection>
+      }
+    </div>
+    <div class='error' id='errorMessage'>{{ errorMessage() }}</div>
+  </div>
+</ng-container>

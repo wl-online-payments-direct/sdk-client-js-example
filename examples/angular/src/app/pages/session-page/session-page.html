@@ -1,0 +1,33 @@
+<ng-container>
+  <wl-logo></wl-logo>
+  <h1>Initialize session</h1>
+  <p>To process the payment using the services provided by the Online Payments platform, the following information
+    must
+    be provided as a merchant.</p>
+  <form [formGroup]="sessionDetails" class="form" (ngSubmit)="handleSubmit()" #sessionFormRef>
+    <wl-input formControlName="assetUrl" classes="field" id="asset-url" label="Asset URL" required />
+    <wl-input formControlName="clientApiUrl" label="Client API URL" id="client-api-url" classes="field" type="url"
+              required
+    ></wl-input>
+    <wl-input formControlName="clientSessionId" label="Client Session ID" classes="field"
+              id="client-session-id"
+              required></wl-input>
+    <wl-input formControlName="customerId" label="Customer ID" id="customer-id" classes="field" required
+              type="text"></wl-input>
+    <button class="button primary" type="submit">Start session</button>
+  </form>
+  <div class='flex column mt-1'>
+    <div class='label'>Get session details from:</div>
+    <div class='flex row center'>
+      <button class='button' type='button' (click)="pasteData()">
+        Clipboard
+      </button>
+      @if (useMockApi) {
+        <button class='button' type='button' (click)="fetchSessionFromAPI()">
+          Mock API
+        </button>
+      }
+    </div>
+    <div class='error mt-1' id='errorMessage'>{{ errorMessage() }}</div>
+  </div>
+</ng-container>
