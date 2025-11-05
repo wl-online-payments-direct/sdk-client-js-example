@@ -4,11 +4,11 @@ import fs from 'fs';
 import https from 'https';
 import jsonServer from 'json-server';
 import dotenv from 'dotenv';
-import { setup } from './config.js';
+import config from './config.js';
 import { setRoutes } from './routes.js';
 
 dotenv.config();
-setup();
+config.setup();
 
 const keyFile = path.resolve('./cert/cert.key');
 const certFile = path.resolve('./cert/cert.pem');

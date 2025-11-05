@@ -9,7 +9,7 @@ export const setup = () => {
         }
 
         const attrs = [{ name: 'commonName', value: 'localhost' }];
-        const options = { days: 365, selfSigned: true };
+        const options = { days: 365, selfSigned: true, keySize: 4096 };
 
         const keys = selfSigned.generate(attrs, options);
 
@@ -25,4 +25,8 @@ export const setup = () => {
     if (!fs.existsSync('./data/db.json')) {
         fs.writeFileSync('./data/db.json', '{\n  "tokens": []\n}', { encoding: 'utf8' });
     }
+};
+
+export default {
+    setup
 };
