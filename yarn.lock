@@ -4947,10 +4947,10 @@ onetime@^7.0.0:
   dependencies:
     mimic-function "^5.0.0"
 
-onlinepayments-sdk-client-js@^3.4.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/onlinepayments-sdk-client-js/-/onlinepayments-sdk-client-js-3.5.0.tgz#ff88a82cdc3fa1845de433cbcd1246cb259a9d11"
-  integrity sha512-TXnuTd+cjJLvWKOPzct09zmM7pPKs2VsL6mdpMq/T+cAxunfTjcKEUdcs3ZPbyt67Bu4DacUYLc49+BfUPdapA==
+onlinepayments-sdk-client-js@^3.6.2:
+  version "3.6.2"
+  resolved "https://registry.yarnpkg.com/onlinepayments-sdk-client-js/-/onlinepayments-sdk-client-js-3.6.2.tgz#2873680bc94ef8ea8ebf9305fb052c2db021e8f0"
+  integrity sha512-aB7YxB8P9I+h4Wf3rxgYvMUguEQ3WRhQoMv9ybYG9V9JdcTFY5Gq2wMNlvZfNGlgihG8vXtjdD7AxCjI+DJ5vw==
 
 onlinepayments-sdk-nodejs@^6.2.0:
   version "6.2.0"
@@ -5237,7 +5237,7 @@ prettier-plugin-svelte@^3.4.0:
   resolved "https://registry.yarnpkg.com/prettier-plugin-svelte/-/prettier-plugin-svelte-3.4.0.tgz#ed0a860b22d39682c1db5c2a210b3db073b4f689"
   integrity sha512-pn1ra/0mPObzqoIQn/vUTR3ZZI6UuZ0sHqMK5x2jMLGrs53h0sXhkVuDcrlssHwIMk7FYrMjHBPoUSyyEEDlBQ==
 
-prettier@^3.6.2:
+prettier@^3.0.3, prettier@^3.6.2:
   version "3.6.2"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.6.2.tgz#ccda02a1003ebbb2bfda6f83a074978f608b9393"
   integrity sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==
@@ -6303,10 +6303,24 @@ vite@7.1.5:
   optionalDependencies:
     fsevents "~2.3.3"
 
-vite@^7.1.2, vite@^7.1.7, vite@^7.1.8:
+vite@^7.1.2:
   version "7.1.9"
   resolved "https://registry.yarnpkg.com/vite/-/vite-7.1.9.tgz#ba844410e5d0c0f2a4eaf17a52af60ebea322cbf"
   integrity sha512-4nVGliEpxmhCL8DslSAUdxlB6+SMrhB0a1v5ijlh1xB1nEPuy1mxaHxysVucLHuWryAxLWg6a5ei+U4TLn/rFg==
+  dependencies:
+    esbuild "^0.25.0"
+    fdir "^6.5.0"
+    picomatch "^4.0.3"
+    postcss "^8.5.6"
+    rollup "^4.43.0"
+    tinyglobby "^0.2.15"
+  optionalDependencies:
+    fsevents "~2.3.3"
+
+vite@^7.2.4:
+  version "7.2.4"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-7.2.4.tgz#a3a09c7e25487612ecc1119c7d412c73da35bd4e"
+  integrity sha512-NL8jTlbo0Tn4dUEXEsUg8KeyG/Lkmc4Fnzb8JXN/Ykm9G4HNImjtABMJgkQoVjOBN/j2WAwDTRytdqJbZsah7w==
   dependencies:
     esbuild "^0.25.0"
     fdir "^6.5.0"

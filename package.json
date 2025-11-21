@@ -12,6 +12,8 @@
         "examples/svelte",
         "examples/vue",
         "examples/angular",
+        "examples/vanilla-js",
+        "examples/minimal-vite-esm",
         "mock-api"
     ],
     "scripts": {
@@ -22,6 +24,6 @@
         "prettier": "^3.6.2"
     },
     "dependencies": {
-        "onlinepayments-sdk-client-js": "^3.5.0"
+        "onlinepayments-sdk-client-js": "^3.6.2"
     }
 }

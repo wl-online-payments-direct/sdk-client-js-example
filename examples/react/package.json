@@ -1,39 +1,39 @@
 {
-  "name": "react-example",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "start": "concurrently \"vite\" \"yarn watch-styles\"",
-    "build": "tsc --noEmit --skipLibCheck && vite build",
-    "lint": "eslint",
-    "preview": "vite preview",
-    "copy-design": "node ./../../scripts/copy-design.js ./design/images",
-    "copy-styles": "npx sass ../../shared/design/styles/index.scss:./design/styles/index.css",
-    "watch-styles": "yarn copy-styles --watch",
-    "postinstall": "yarn copy-design & yarn copy-styles"
-  },
-  "dependencies": {
-    "@google-pay/button-react": "^3.2.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-router-dom": "^7.7.1"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.36.0",
-    "@types/node": "^24.6.2",
-    "@types/react": "^19.1.16",
-    "@types/react-dom": "^19.1.9",
-    "@types/react-router-dom": "^5.3.3",
-    "@vitejs/plugin-react": "^5.0.4",
-    "concurrently": "^9.2.1",
-    "eslint": "^9.36.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.22",
-    "globals": "^16.4.0",
-    "sass": "^1.93.2",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.35.1",
-    "vite": "^7.1.7"
-  }
+    "name": "react-example",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "start": "concurrently \"vite\" \"yarn watch-styles\"",
+        "build": "tsc --noEmit --skipLibCheck && vite build",
+        "lint": "eslint",
+        "preview": "vite preview",
+        "copy-design": "node ./../../scripts/copy-design.js ./design/images",
+        "copy-styles": "npx sass ../../shared/design/styles/index.scss:./design/styles/index.css",
+        "watch-styles": "yarn copy-styles --watch",
+        "postinstall": "yarn copy-design & yarn copy-styles"
+    },
+    "dependencies": {
+        "@google-pay/button-react": "^3.2.1",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0",
+        "react-router-dom": "^7.7.1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.36.0",
+        "@types/node": "^24.6.2",
+        "@types/react": "^19.1.16",
+        "@types/react-dom": "^19.1.9",
+        "@types/react-router-dom": "^5.3.3",
+        "@vitejs/plugin-react": "^5.0.4",
+        "concurrently": "^9.2.1",
+        "eslint": "^9.36.0",
+        "eslint-plugin-react-hooks": "^5.2.0",
+        "eslint-plugin-react-refresh": "^0.4.22",
+        "globals": "^16.4.0",
+        "sass": "^1.93.2",
+        "typescript": "~5.9.3",
+        "typescript-eslint": "^8.35.1",
+        "vite": "^7.2.4"
+    }
 }
