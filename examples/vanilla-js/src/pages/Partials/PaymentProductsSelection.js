@@ -1,9 +1,11 @@
+// noinspection ES6UnusedImports
+import * as sdk from 'onlinepayments-sdk-client-js';
 import FormField from '../../components/FormField.js';
 
 /**
  * The component that displays payment product selection.
  *
- * @param {{label: string, id: string}[]} products
+ * @param {sdk.BasicPaymentProduct[] | undefined} products
  * @param {(productId: string) => void} onPaymentProductSelected
  * @returns {{mount: (mountingPoint: HTMLElement) => void}}
  * @constructor
@@ -19,7 +21,7 @@ const PaymentProductsSelection = (products, onPaymentProductSelected) => {
             <p class="text-left">Select payment method:</p>
             <form class="form" id="paymentSelectionForm">
                 ${products
-                    .map((product) => {
+                    ?.map((product) => {
                         return FormField.getRadioField(product.label, 'paymentMethod', product.id);
                     })
                     .join('')}

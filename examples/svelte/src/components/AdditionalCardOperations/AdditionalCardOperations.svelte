@@ -1,13 +1,18 @@
 <script lang="ts">
     import { translations } from '../../translations/translations';
-    import type { AmountOfMoneyJSON, ErrorResponseJSON, Session } from 'onlinepayments-sdk-client-js';
+    import type {
+        AmountOfMoney,
+        OnlinePaymentSdk,
+        SdkError
+    } from 'onlinepayments-sdk-client-js';
     import { loader } from '../../stores/loader';
+    import ErrorService from '@shared/services/ErrorService';
 
-    export let session: Session | null = null;
+    export let sdk: OnlinePaymentSdk | null = null;
     export let cardNumber: string = '';
     export let cardNumberError: boolean = false;
     export let paymentProductId: number | undefined = undefined;
-    export let amountOfMoney: AmountOfMoneyJSON | undefined = undefined;
+    export let amountOfMoney: AmountOfMoney | undefined = undefined;
 
     let cardOperations = {
         currencyConversions: [] as string[],
@@ -31,14 +36,14 @@
      * @param cardNum - sanitized card number
      */
     const processCurrencyConversion = async (cardNum: string) => {
-        if (!session) {
+        if (!sdk) {
             return;
         }
 
         loader.show();
 
         try {
-            const response = await session.getCurrencyConversionQuote(amountOfMoney!, {
+            const response = await sdk.getCurrencyConversionQuote(amountOfMoney!, {
                 partialCreditCardNumber: cardNum,
                 paymentProductId
             });
@@ -63,11 +68,12 @@
                 };
             }
         } catch (err) {
-            const error = err as ErrorResponseJSON;
-            if (error.errors?.length) {
+            const error = err as SdkError;
+            const errorMessages  = ErrorService.extractErrorMessages(error)
+            if (errorMessages?.length) {
                 cardOperationsErrors = {
                     ...cardOperationsErrors,
-                    currencyConversions: error.errors.map(e => e.message ?? '')
+                    currencyConversions: [...cardOperationsErrors.currencyConversions, ...errorMessages]
                 };
             }
         } finally {
@@ -97,14 +103,14 @@
      * @param cardNum - sanitized card number
      */
     const processSurcharge = async (cardNum: string) => {
-        if (!session) {
+        if (!sdk) {
             return;
         }
 
         loader.show();
 
         try {
-            const response = await session.getSurchargeCalculation(amountOfMoney!, {
+            const response = await sdk.getSurchargeCalculation(amountOfMoney!, {
                 partialCreditCardNumber: cardNum,
                 paymentProductId
             });
@@ -117,12 +123,13 @@
                 cardOperations = { ...cardOperations, surcharges };
             }
         } catch (err) {
-            const error = err as ErrorResponseJSON;
+            const error = err as SdkError;
+            const errorMessages = ErrorService.extractErrorMessages(error);
 
-            if (error.errors?.length) {
+            if (errorMessages?.length) {
                 cardOperationsErrors = {
                     ...cardOperationsErrors,
-                    surcharges: error.errors.map(e => e.message ?? '')
+                    surcharges: [...cardOperationsErrors.surcharges, ...errorMessages]
                 };
             }
         } finally {

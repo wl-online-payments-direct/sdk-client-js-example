@@ -27,7 +27,7 @@
         const cardPaymentSpecificData = StorageService.getCardPaymentSpecificData();
 
         if (!paymentRequestData && !encryptedData && !cardPaymentSpecificData) {
-            goto(resolve('/payment/'));
+            goto(resolve('/payment'));
 
             return;
         }
@@ -62,8 +62,8 @@
         try {
             let payload: CreatePaymentRequest =
                 cardSpecific && accountOnFileId
-                    ? { ...cardSpecific, paymentContext: paymentContext ?? undefined }
-                    : { data: encryptedData ?? '', paymentContext: paymentContext ?? undefined };
+                    ? { ...cardSpecific, ...paymentContext }
+                    : { data: encryptedData ?? '', ...paymentContext };
 
             const response = await ApiService(mockApiUrl).createPayment(payload);
             paymentResponse = JSON.stringify(response, null, 2);
@@ -149,11 +149,13 @@
 
     <div class="flex column start mt-1">
         <span>{translations.to_learn_more_about_creating_payment_check_the_following_link}</span>
-        <a class="button link" href={resolve(createPaymentApiDocumentationLink)} target="_blank"
+       <!--        eslint-disable-next-line svelte/no-navigation-without-resolve -->
+        <a class="button link" href={createPaymentApiDocumentationLink} target="_blank"
            rel="noopener noreferrer">
             {translations.create_payment_api_documentation}
         </a>
-        <a class="button link" href={resolve(serverToServerDocumentationLink)} target="_blank"
+        <!--        eslint-disable-next-line svelte/no-navigation-without-resolve -->
+        <a class="button link" href={serverToServerDocumentationLink} target="_blank"
            rel="noopener noreferrer">
             {translations.server_to_server_integration}
         </a>

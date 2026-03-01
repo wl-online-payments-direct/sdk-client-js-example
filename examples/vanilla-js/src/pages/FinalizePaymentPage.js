@@ -100,10 +100,10 @@ const FinalizePaymentPage = () => {
      * @param {HTMLElement} mountingPoint
      */
     const mount = (mountingPoint) => {
-        if (!StorageService.getSession()) {
+        if (!StorageService.getSessionData()) {
             window.location = Pages.Home;
         } else if (
-            !StorageService.getPaymentProduct() ||
+            !StorageService.getPaymentProductId() ||
             (!StorageService.getEncryptedData() && !StorageService.getCardPaymentSpecificData())
         ) {
             window.location = Pages.Payment;

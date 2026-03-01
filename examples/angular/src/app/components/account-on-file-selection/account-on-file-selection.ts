@@ -29,7 +29,7 @@ export class AccountOnFileSelection {
   }
 
   getLabel(account: AccountOnFile) {
-    return account.getLabel()?.formattedValue ?? '';
+    return account.label ?? '';
   }
 
   handleChange(id: string) {

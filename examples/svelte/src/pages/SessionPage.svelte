@@ -8,15 +8,15 @@
     import { loader } from '../stores/loader';
     import { translations } from '../translations/translations';
     import { mockApiUrl, useMockApi } from '../config';
-    import type { ErrorResponseJSON, SessionDetails } from 'onlinepayments-sdk-client-js';
+    import type { ErrorResponse, SessionData } from 'onlinepayments-sdk-client-js';
     import { onMount } from 'svelte';
     import { resolve } from '$app/paths';
 
     let errorMessage: string | undefined;
-    let sessionDetails: Partial<SessionDetails> = {};
+    let sessionDetails: Partial<SessionData> = {};
 
     onMount(() => {
-        sessionDetails = StorageService.getSession() ?? {};
+        sessionDetails = StorageService.getSessionData() ?? {};
     });
 
     /**
@@ -30,9 +30,9 @@
         errorMessage = '';
 
         try {
-            sessionDetails = await ApiService(mockApiUrl).getSession();
+            sessionDetails = await ApiService(mockApiUrl).getSessionData();
         } catch (error) {
-            const err = error as ErrorResponseJSON;
+            const err = error as ErrorResponse;
             if (err.errors?.length) {
                 errorMessage =
                     translations.errors_while_fetching_data +
@@ -95,7 +95,7 @@
         }
 
         StorageService.clear();
-        StorageService.setSession(sessionDetails as SessionDetails);
+        StorageService.setSession(sessionDetails as SessionData);
 
         goto(resolve('/payment'));
     };

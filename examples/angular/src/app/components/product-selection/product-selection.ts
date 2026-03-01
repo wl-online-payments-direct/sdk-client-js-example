@@ -1,14 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { AccountOnFile, BasicPaymentItem } from 'onlinepayments-sdk-client-js';
+import { BasicPaymentProduct } from 'onlinepayments-sdk-client-js';
 import { RadioComponent } from '../form-elements/radio/radio';
-
-type MappedBasicItem = {
-  id: number;
-  label?: string;
-  logo: string;
-  accountsOnFile: AccountOnFile[];
-};
 
 @Component({
   selector: 'product-selection',
@@ -19,26 +12,17 @@ type MappedBasicItem = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductSelection {
-  items = input.required<BasicPaymentItem[]>();
-  selectedItemId = signal<number | null>(null);
-
-  mappedItems = computed<MappedBasicItem[]>(() =>
-    (this.items() ?? []).map((product) => ({
-      id: product.id,
-      label: product.json.displayHints.label,
-      logo: product.json.displayHints.logo,
-      accountsOnFile: product.accountsOnFile ?? [],
-    })),
-  );
+  products = input.required<BasicPaymentProduct[]>();
+  selectedProductId = signal<number | null>(null);
 
   onChange = output<number>();
 
   toString = (v: unknown) => (v ?? '').toString();
-  isChecked = (id: number) => this.selectedItemId() === id;
+  isChecked = (id: number) => this.selectedProductId() === id;
 
   handleChange = (idStr: string) => {
     const id = Number(idStr);
     this.onChange.emit(id);
-    this.selectedItemId.set(id);
+    this.selectedProductId.set(id);
   };
 }

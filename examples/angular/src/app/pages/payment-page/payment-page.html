@@ -34,15 +34,15 @@
       <button class="button primary" type="submit" title="title">Get payment methods</button>
     </form>
     <div class='flex row'>
-      @if (paymentMethods()?.basicPaymentItems; as items) {
-        @if (items.length > 0) {
-          <product-selection [items]="paymentMethods()!.basicPaymentItems" (onChange)="handleProductChange($event)">
+      @if (paymentMethods()?.paymentProducts; as products) {
+        @if (products.length > 0) {
+          <product-selection [products]="products" (onChange)="handleProductChange($event)">
             >
           </product-selection>
         }
       }
-      @if (paymentMethods()?.accountOnFileById && !!paymentMethods()?.accountsOnFile?.length) {
-        <account-on-file-selection [accountsOnFile]="getAccountsOnFileById()"
+      @if (paymentMethods()?.accountsOnFile && paymentMethods()?.accountsOnFile?.length) {
+        <account-on-file-selection [accountsOnFile]="paymentMethods()!.accountsOnFile"
                                    (onChange)="handleAccountOnFileChange($event)"></account-on-file-selection>
       }
     </div>

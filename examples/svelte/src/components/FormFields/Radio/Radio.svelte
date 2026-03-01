@@ -12,7 +12,6 @@
 
     const handleChange = (event: Event) => {
         const target = event.target as HTMLInputElement;
-        console.log('Radio clicked:', target.value);
         onChange?.(target.value);
     };
 </script>

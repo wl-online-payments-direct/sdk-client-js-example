@@ -1,7 +1,8 @@
 import translations from '../../translations/translations.ts';
 import { useState } from 'react';
-import type { AmountOfMoneyJSON, ErrorResponseJSON, Session } from 'onlinepayments-sdk-client-js';
+import type { AmountOfMoney, OnlinePaymentSdk, SdkError } from 'onlinepayments-sdk-client-js';
 import { useLoader } from '../Loader/Loader.tsx';
+import ErrorService from '@shared/services/ErrorService.ts';
 
 type CardOperations = {
     currencyConversions: string[];
@@ -24,13 +25,13 @@ const CardOperationsErrorInitialState = {
 };
 
 type Props = {
-    session: Session | null;
+    sdk: OnlinePaymentSdk | null;
     cardNumber: string;
     cardNumberError: boolean;
     paymentProductId?: number;
-    amountOfMoney: AmountOfMoneyJSON;
+    amountOfMoney: AmountOfMoney;
 };
-const AdditionalCardOperations = ({ session, cardNumber, cardNumberError, paymentProductId, amountOfMoney }: Props) => {
+const AdditionalCardOperations = ({ sdk, cardNumber, cardNumberError, paymentProductId, amountOfMoney }: Props) => {
     const { show, hide } = useLoader();
 
     const [cardOperations, setCardOperations] = useState<CardOperations>({ ...CardOperationsInitialState });
@@ -57,11 +58,10 @@ const AdditionalCardOperations = ({ session, cardNumber, cardNumberError, paymen
     const processSurcharge = (cardNumber: string) => {
         show();
 
-        session
-            ?.getSurchargeCalculation(amountOfMoney, {
-                partialCreditCardNumber: cardNumber,
-                paymentProductId: paymentProductId
-            })
+        sdk?.getSurchargeCalculation(amountOfMoney, {
+            partialCreditCardNumber: cardNumber,
+            paymentProductId: paymentProductId
+        })
             .then((response) => {
                 if (response.surcharges?.length) {
                     response.surcharges.forEach((surcharge, index) => {
@@ -74,20 +74,13 @@ const AdditionalCardOperations = ({ session, cardNumber, cardNumberError, paymen
                     });
                 }
             })
-            .catch((response: ErrorResponseJSON) => {
-                if (response.errors?.length) {
-                    const errorMessages: string[] = [];
-                    response.errors.forEach((error) => {
-                        if (error.message) {
-                            errorMessages.push(error.message);
-                        }
-                    });
+            .catch((error: SdkError) => {
+                const errorMessages = ErrorService.extractErrorMessages(error);
 
-                    setCardOperationsErrors((prev) => ({
-                        ...prev,
-                        surcharges: [...prev.surcharges, ...errorMessages]
-                    }));
-                }
+                setCardOperationsErrors((prev) => ({
+                    ...prev,
+                    surcharges: [...prev.surcharges, ...errorMessages]
+                }));
             })
             .finally(() => {
                 hide();
@@ -113,11 +106,10 @@ const AdditionalCardOperations = ({ session, cardNumber, cardNumberError, paymen
     const processCurrencyConversion = (cardNumber: string) => {
         show();
 
-        session
-            ?.getCurrencyConversionQuote(amountOfMoney, {
-                partialCreditCardNumber: cardNumber,
-                paymentProductId: paymentProductId
-            })
+        sdk?.getCurrencyConversionQuote(amountOfMoney, {
+            partialCreditCardNumber: cardNumber,
+            paymentProductId: paymentProductId
+        })
             .then((response) => {
                 if (response.result) {
                     setCardOperations((prev) => ({
@@ -139,20 +131,13 @@ const AdditionalCardOperations = ({ session, cardNumber, cardNumberError, paymen
                     }));
                 }
             })
-            .catch((response: ErrorResponseJSON) => {
-                if (response.errors?.length) {
-                    const errorMessages: string[] = [];
-                    response.errors.forEach((error) => {
-                        if (error.message) {
-                            errorMessages.push(error.message);
-                        }
-                    });
+            .catch((error: SdkError) => {
+                const errorMessages = ErrorService.extractErrorMessages(error);
 
-                    setCardOperationsErrors((prev) => ({
-                        ...prev,
-                        currencyConversions: [...prev.currencyConversions, ...errorMessages]
-                    }));
-                }
+                setCardOperationsErrors((prev) => ({
+                    ...prev,
+                    currencyConversions: [...prev.currencyConversions, ...errorMessages]
+                }));
             })
             .finally(() => {
                 hide();

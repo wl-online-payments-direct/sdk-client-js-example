@@ -24,7 +24,7 @@
     "there_was_an_error_fetching_data_did_you_mock_api": "There was an error fetching data. Did you start the mock API?",
     "the_clipboard_does_not_contain_valid_data": "The clipboard does not contain valid data.",
     "please_fill_in_all_the_data": "Please fill in all the data.",
-    "payment_product_not_found": "Payment product not found.'",
+    "payment_product_not_found": "Payment product not found.",
     "this_demo_supports_only_card_payment_and_google_pay": "This demo supports only card payment products and google pay.",
     "total_amount": "Total amount:",
     "pay_with_a_credit_card": "Pay with a credit card",

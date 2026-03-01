@@ -1,10 +1,10 @@
 import type { NavigationGuard } from 'vue-router';
 import StorageService from '@shared/services/StorageService';
 
-export const requiresProduct: NavigationGuard = () => {
-    const product = StorageService.getPaymentProductId();
+export const requiresContext: NavigationGuard = () => {
+    const context = StorageService.getPaymentContext();
 
-    if (!product) {
+    if (!context) {
         return { name: 'payment', replace: true };
     }
 

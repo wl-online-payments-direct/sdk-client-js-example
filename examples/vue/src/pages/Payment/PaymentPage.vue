@@ -3,7 +3,14 @@ import { computed, onMounted, reactive, ref, shallowRef, toRaw } from 'vue';
 import translations from '../../translations/translations.ts';
 import Logo from '../../components/Logo/Logo.vue';
 import Input from '../../components/FormFields/Input/Input.vue';
-import { BasicPaymentItems, type PaymentContextWithAmount, Session } from 'onlinepayments-sdk-client-js';
+import {
+    BasicPaymentProducts,
+    CommunicationError,
+    init,
+    type OnlinePaymentSdk,
+    type PaymentContextWithAmount,
+    type SdkError
+} from 'onlinepayments-sdk-client-js';
 import StorageService from '@shared/services/StorageService';
 import Select from '../../components/FormFields/Select/Select.vue';
 import countries from '@shared/constants/countries';
@@ -19,11 +26,6 @@ import LoaderService from '../../services/LoaderService.ts';
 const router = useRouter();
 const { redirectToPage } = RouterService(router);
 
-type Error = {
-    message?: string;
-    status?: number;
-};
-
 const PaymentContextInitialData = {
     amountOfMoney: {
         amount: 1000,
@@ -35,18 +37,18 @@ const PaymentContextInitialData = {
 
 const paymentContextModel: PaymentContextWithAmount = reactive({ ...PaymentContextInitialData });
 
-const session = shallowRef<Session>();
-const paymentMethods = ref<BasicPaymentItems | undefined>();
+const session = shallowRef<OnlinePaymentSdk>();
+const paymentMethods = ref<BasicPaymentProducts | undefined>();
 
 const isFormExpanded = ref(true);
 const errorMessage = ref('');
 
 onMounted(() => {
-    const sessionDetails = StorageService.getSession();
+    const sessionDetails = StorageService.getSessionData();
     const context = StorageService.getPaymentContext();
 
     if (sessionDetails) {
-        session.value = new Session(sessionDetails);
+        session.value = init(sessionDetails);
     }
 
     if (context) {
@@ -75,8 +77,8 @@ const handleSubmit = () => {
     }
 };
 
-const handleUnauthorizedError = (error: Error) => {
-    if (error?.status === 403) {
+const handleUnauthorizedError = (error: SdkError) => {
+    if (error instanceof CommunicationError) {
         StorageService.clear();
         redirectToPage('/');
     }
@@ -85,12 +87,12 @@ const handleUnauthorizedError = (error: Error) => {
 const fetchPaymentProducts = (paymentDetails: PaymentContextWithAmount) => {
     LoaderService.show();
     session?.value
-        ?.getBasicPaymentItems(paymentDetails)
-        .then((items) => {
-            paymentMethods.value = items;
+        ?.getBasicPaymentProducts(paymentDetails)
+        .then((basicProducts) => {
+            paymentMethods.value = basicProducts;
             handleExpandCollapse();
         })
-        .catch((error: Error) => {
+        .catch((error: SdkError) => {
             paymentMethods.value = undefined;
             errorMessage.value = error?.message ?? '';
             handleUnauthorizedError(error);
@@ -109,7 +111,7 @@ const setSelectedProduct = async (productId: number) => {
         return;
     }
 
-    StorageService.setPaymentProduct(paymentProduct.json);
+    StorageService.setPaymentProductId(paymentProduct.id);
     LoaderService.hide();
 
     return paymentProduct;
@@ -120,7 +122,7 @@ const handleProductSelection = async (id: number) => {
 
     if (product?.paymentMethod === 'card') {
         redirectToPage('/payment/credit-card');
-    } else if (product?.paymentMethod === 'mobile' && product?.displayHints?.label === 'GOOGLEPAY') {
+    } else if (product?.paymentMethod === 'mobile' && product?.label === 'GOOGLEPAY') {
         redirectToPage('/payment/google-pay');
     } else {
         errorMessage.value = translations.this_payment_product_is_not_supported_in_this_demo;
@@ -128,7 +130,8 @@ const handleProductSelection = async (id: number) => {
 };
 
 const handleAccountOnFileSelection = async (id: string) => {
-    const aof = paymentMethods?.value?.accountOnFileById[id];
+    const aof = paymentMethods?.value?.accountsOnFile.find((aof) => aof.id === id);
+
     if (aof) {
         const product = await setSelectedProduct(aof.paymentProductId);
 
@@ -197,13 +200,13 @@ const handleExpandCollapse = () => {
         </div>
         <div class="flex row">
             <ProductSelection
-                v-if="paymentMethods?.basicPaymentItems?.length"
-                :items="paymentMethods.basicPaymentItems"
+                v-if="paymentMethods?.paymentProducts.length"
+                :products="paymentMethods.paymentProducts"
                 @select="(id) => handleProductSelection(id)"
             />
             <AccountOnFileSelection
                 v-if="paymentMethods && paymentMethods.accountsOnFile?.length > 0"
-                :accounts-on-file="Object.values(paymentMethods.accountOnFileById)"
+                :accounts-on-file="paymentMethods.accountsOnFile"
                 @select="(id) => handleAccountOnFileSelection(id)"
             />
         </div>

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, shallowRef, toRaw } from 'vue';
-import { type PaymentContextWithAmount, PaymentProduct, PaymentRequest, Session } from 'onlinepayments-sdk-client-js';
+import {
+    init,
+    type OnlinePaymentSdk,
+    type PaymentContextWithAmount,
+    PaymentProduct,
+    PaymentRequest
+} from 'onlinepayments-sdk-client-js';
 import { useRouter } from 'vue-router';
 import RouterService from '../../services/RouterService.ts';
 import LoaderService from '../../services/LoaderService.ts';
@@ -9,6 +15,7 @@ import NumberFormatter from '@shared/utilities/NumberFormatter';
 import EncryptionService from '@shared/services/EncryptionService';
 import translations from '../../translations/translations.ts';
 import Logo from '../../components/Logo/Logo.vue';
+import PaymentProductService from '@shared/services/PaymentProductService.ts';
 
 declare global {
     interface Window {
@@ -21,35 +28,42 @@ const { redirectToPage } = RouterService(router);
 
 const googlePayContainer = ref<HTMLElement | null>(null);
 
-const session = shallowRef<Session>();
-const paymentProduct = ref<PaymentProduct>();
+const sdk = shallowRef<OnlinePaymentSdk>();
+const paymentProduct = ref<PaymentProduct | null>();
+
 const paymentContext = ref<PaymentContextWithAmount>();
 
 const errorMessage = ref('');
 
 let paymentsClient: any;
 
+const isLoading = ref(true);
+
 const ENVIRONMENT = 'TEST' as const;
 const baseRequest = { apiVersion: 2, apiVersionMinor: 0 } as const;
 const baseAllowedCardNetworks = ['MASTERCARD', 'VISA'] as const;
 const baseAllowedAuthMethods = ['PAN_ONLY', 'CRYPTOGRAM_3DS'] as const;
 
-onMounted(() => {
+const initData = async () => {
     LoaderService.show();
-    const sessionDetails = StorageService.getSession();
-    const productJSON = StorageService.getPaymentProduct();
+    const sessionDetails = StorageService.getSessionData();
+    const productId = StorageService.getPaymentProductId();
     const context = StorageService.getPaymentContext();
 
-    if (productJSON) {
-        paymentProduct.value = new PaymentProduct(productJSON);
-    }
-
     if (sessionDetails) {
-        session.value = new Session(sessionDetails);
+        sdk.value = init(sessionDetails);
     }
 
     if (context) {
         paymentContext.value = context;
+    }
+
+    if (productId) {
+        paymentProduct.value = await PaymentProductService.getPaymentProduct(sdk.value!, Number(productId), context!);
+    }
+
+    if (!paymentProduct.value) {
+        redirectToPage('/payment');
     }
 
     if (!window.google?.payments?.api) {
@@ -63,6 +77,11 @@ onMounted(() => {
 
     void isGooglePayButtonReady();
     LoaderService.hide();
+    isLoading.value = false;
+};
+
+onMounted(() => {
+    initData().catch((error) => console.log(error));
 });
 
 const tokenizationSpecification = computed(() => {
@@ -151,13 +170,12 @@ const handleClick = async () => {
             return;
         }
 
-        const paymentRequest = new PaymentRequest();
-        paymentRequest.setPaymentProduct(toRaw(paymentProduct.value) as PaymentProduct);
+        const paymentRequest = new PaymentRequest(toRaw(paymentProduct.value) as PaymentProduct);
         paymentRequest.setValue('encryptedPaymentData', token);
 
-        if (paymentRequest.isValid() && session.value) {
+        if (paymentRequest.validate().isValid && sdk.value) {
             try {
-                await EncryptionService.encrypt(session.value as Session, paymentRequest);
+                await EncryptionService.encrypt(sdk.value, paymentRequest);
                 StorageService.setPaymentRequest(paymentRequest);
                 redirectToPage('/payment/finalize');
             } catch (errors) {
@@ -191,7 +209,18 @@ const handleClick = async () => {
         <RouterLink to="/payment/" class="button link self-start">
             {{ translations.back_to_payment_method_selection }}
         </RouterLink>
-        <div class="form flex column center m-0">
+        <div
+            class="form flex column center m-0"
+            :class="{
+                form: true,
+                flex: true,
+                column: true,
+                center: true,
+                'm-0': true,
+                'form-max-height': true,
+                invisible: isLoading
+            }"
+        >
             <div ref="googlePayContainer" class="gpay-container"></div>
             <div v-if="errorMessage" class="error">{{ translations.google_pay_not_ready }}</div>
         </div>

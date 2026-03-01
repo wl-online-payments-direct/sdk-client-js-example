@@ -1,17 +1,10 @@
-import {
-  afterNextRender,
-  Component,
-  effect,
-  ElementRef,
-  inject,
-  signal,
-  ViewChild,
-} from '@angular/core';
+import { Component, effect, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import {
   AccountOnFile,
+  init,
+  OnlinePaymentSdk,
   PaymentContextWithAmount,
   PaymentProduct,
-  Session,
 } from 'onlinepayments-sdk-client-js';
 import StorageService from '@shared/services/StorageService';
 import PaymentRequestUtility from '@shared/utilities/PaymentRequestUtility';
@@ -21,6 +14,8 @@ import { FormInput } from '../../components/form-elements/input/input';
 import { LogoComponent } from '../../components/logo/logo';
 import NumberFormatter from '@shared/utilities/NumberFormatter';
 import { PaymentValidation } from '../../utilities/payment-validation';
+import PaymentProductService from '@shared/services/PaymentProductService';
+import { LoaderService } from '../../services/loader-service';
 
 type AccountOnFilePaymentForm = {
   cardNumber: FormControl<string>;
@@ -41,10 +36,13 @@ export class AccountOnFilePage {
   @ViewChild('accountOnFileFormRef', { read: ElementRef })
   accountOnFileFormRef!: ElementRef<HTMLFormElement>;
 
-  session: Session | null = null;
+  sdk: OnlinePaymentSdk | null = null;
+  accountOnFile = signal<AccountOnFile | undefined>(undefined);
   paymentProduct: PaymentProduct | null = null;
+
   paymentContext: PaymentContextWithAmount | null = StorageService.getPaymentContext();
-  accountOnFile = signal<AccountOnFile | null>(null);
+
+  isLoading: boolean = true;
 
   form = new FormGroup<AccountOnFilePaymentForm>({
     cvv: new FormControl('', { nonNullable: true }),
@@ -58,8 +56,7 @@ export class AccountOnFilePage {
     PaymentValidation.applyValidators(this.form, this.paymentProduct, fields);
   }
 
-  constructor() {
-    afterNextRender({ write: () => this.setupValidators() });
+  constructor(private loader: LoaderService) {
     effect(() => {
       this.form.patchValue({
         cardNumber: this.getCardNumber(),
@@ -69,13 +66,32 @@ export class AccountOnFilePage {
     });
   }
 
-  ngOnInit() {
-    this.session = new Session(StorageService.getSession()!);
-    this.paymentProduct = new PaymentProduct(StorageService.getPaymentProduct()!);
+  async initData(): Promise<void> {
+    this.loader.show();
+    this.sdk = init(StorageService.getSessionData()!);
 
-    this.accountOnFile.set(
-      this.paymentProduct?.accountOnFileById?.[StorageService.getAccountOnFileId()!] ?? null,
+    this.paymentProduct = await PaymentProductService.getPaymentProduct(
+      this.sdk,
+      Number(StorageService.getPaymentProductId()!),
+      StorageService.getPaymentContext()!,
     );
+
+    if (!this.paymentProduct) {
+      void this.router.navigate(['/payment']);
+      return;
+    }
+
+    const aofId = StorageService.getAccountOnFileId();
+    this.accountOnFile.set(this.paymentProduct?.accountsOnFile.find((aof) => aof.id === aofId));
+
+    this.setupValidators();
+
+    this.isLoading = false;
+    this.loader.hide();
+  }
+
+  ngOnInit() {
+    this.initData().catch((error) => console.log(error));
   }
 
   ngOnDestroy() {
@@ -93,7 +109,7 @@ export class AccountOnFilePage {
 
     this.accountOnFile() && paymentRequest.setAccountOnFile(this.accountOnFile());
 
-    if (paymentRequest.isValid() && !!this.form.get('cvv')) {
+    if (paymentRequest.validate().isValid && !!this.form.get('cvv')) {
       StorageService.setPaymentRequest(paymentRequest);
 
       StorageService.setCardPaymentSpecificData({
@@ -107,21 +123,21 @@ export class AccountOnFilePage {
   }
 
   getCardNumber() {
-    return this.accountOnFile()?.getLabel()?.formattedValue ?? '';
+    return this.accountOnFile()?.label ?? '';
   }
 
   getCardholderName() {
-    return this.accountOnFile()?.attributeByKey['cardholderName']?.value ?? '';
+    return this.accountOnFile()?.getValue('cardholderName') ?? '';
   }
 
   getExpiryDate() {
     const paymentRequest = PaymentRequestUtility.get(
       this.paymentProduct ?? undefined,
       'expiryDate',
-      this.accountOnFile()?.attributeByKey?.['expiryDate']?.value,
+      this.accountOnFile()?.getValue('expiryDate'),
     );
 
-    return paymentRequest?.getMaskedValue('expiryDate') ?? '';
+    return paymentRequest?.getField('expiryDate').getMaskedValue() ?? '';
   }
 
   getFormattedAmount() {
@@ -136,6 +152,6 @@ export class AccountOnFilePage {
   }
 
   hasField(id: string): boolean {
-    return !!this.paymentProduct?.json?.fields?.some((f) => f.id === id);
+    return !!this.paymentProduct?.getField(id);
   }
 }

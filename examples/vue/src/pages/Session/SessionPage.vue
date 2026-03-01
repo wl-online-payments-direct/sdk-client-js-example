@@ -4,7 +4,7 @@ import translations from '../../translations/translations.ts';
 import { mockApiUrl, useMockApi } from '../../config.ts';
 import Logo from '../../components/Logo/Logo.vue';
 import Input from '../../components/FormFields/Input/Input.vue';
-import { type APIErrorJSON, type ErrorResponseJSON, type SessionDetails } from 'onlinepayments-sdk-client-js';
+import { type ErrorResponse, type SessionData } from 'onlinepayments-sdk-client-js';
 import StorageService from '@shared/services/StorageService';
 import ApiService from '@shared/services/ApiService';
 import { useRouter } from 'vue-router';
@@ -19,14 +19,14 @@ const SessionDetailsInitialData = {
     assetUrl: '',
     customerId: '',
     clientApiUrl: ''
-} satisfies SessionDetails;
+} satisfies SessionData;
 
-const sessionDetailsModel: SessionDetails = reactive({ ...SessionDetailsInitialData });
+const sessionDetailsModel: SessionData = reactive({ ...SessionDetailsInitialData });
 
 const errorMessage = ref('');
 
 onMounted(() => {
-    const sessionDetails = StorageService.getSession();
+    const sessionDetails = StorageService.getSessionData();
 
     if (sessionDetails) {
         Object.assign(sessionDetailsModel, sessionDetails);
@@ -58,11 +58,9 @@ const fetchSessionFromAPI = async () => {
         .then((response) => {
             Object.assign(sessionDetailsModel, response);
         })
-        .catch((error: ErrorResponseJSON) => {
-            if (error?.errors?.length) {
-                message =
-                    translations.errors_while_fetching_data +
-                    error.errors.map((e: APIErrorJSON) => e.message).join(', ');
+        .catch((error: ErrorResponse) => {
+            if (error.errors?.length) {
+                message = translations.errors_while_fetching_data + error.errors.map((err) => err.message).join(', ');
             } else {
                 message = translations.there_was_an_error_fetching_data_did_you_mock_api;
             }

@@ -19,7 +19,7 @@ const AccountsOnFileSelection = (accounts, onAccountOnFileSelected) => {
             <form class="form" id="aofSelectionForm">
                 ${accounts
                     .map((aof) => {
-                        return FormField.getRadioField(aof.getLabel().formattedValue, 'aof', aof.id);
+                        return FormField.getRadioField(aof.label, 'aof', aof.id);
                     })
                     .join('')}
             </form>

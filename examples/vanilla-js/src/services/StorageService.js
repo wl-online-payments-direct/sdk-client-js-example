@@ -51,7 +51,7 @@ const StorageService = () => {
             JSON.stringify({
                 session: null,
                 paymentContext: null,
-                paymentProduct: null,
+                paymentProductId: null,
                 encryptedData: null,
                 cardPaymentSpecificData: null,
                 accountOnFileId: null
@@ -73,24 +73,9 @@ const StorageService = () => {
     };
 
     /**
-     * Gets stored session details.
-     *
-     * @returns {sdk.Session | null}
-     */
-    const getSession = () => {
-        const details = getSessionDetails();
-        if (!details) {
-            return null;
-        }
-
-        const product = getPaymentProduct();
-        return new sdk.Session(details, product?.json);
-    };
-
-    /**
      * Sets session details.
      *
-     * @param {sdk.SessionDetails} details
+     * @param {sdk.SessionData} details
      */
     const setSessionDetails = (details) => {
         setItem('session', details);
@@ -99,9 +84,9 @@ const StorageService = () => {
     /**
      * Gets session details.
      *
-     * @returns {sdk.SessionDetails}
+     * @returns {sdk.SessionData}
      */
-    const getSessionDetails = () => {
+    const getSessionData = () => {
         return getItem('session');
     };
 
@@ -126,24 +111,24 @@ const StorageService = () => {
     /**
      * Gets stored payment product.
      *
-     * @returns {sdk.PaymentProduct | null}
+     * @returns {number | null}
      */
-    const getPaymentProduct = () => {
-        const json = getItem('paymentProduct');
-        if (!json) {
+    const getPaymentProductId = () => {
+        const id = getItem('paymentProductId');
+        if (!id) {
             return null;
         }
 
-        return new sdk.PaymentProduct(json);
+        return id;
     };
 
     /**
-     * Sets payment product.
+     * Sets payment product id.
      *
-     * @param {sdk.PaymentProduct} product
+     * @param {number} id
      */
-    const setPaymentProduct = (product) => {
-        setItem('paymentProduct', product.json);
+    const setPaymentProductId = (id) => {
+        setItem('paymentProductId', id);
     };
 
     /**
@@ -212,7 +197,7 @@ const StorageService = () => {
      * @param {sdk.PaymentRequest} paymentRequest
      */
     const setPaymentRequest = (paymentRequest) => {
-        setItem('paymentRequest', { ...paymentRequest.getUnmaskedValues(), tokenize: paymentRequest.getTokenize() });
+        setItem('paymentRequest', { ...paymentRequest.getValues(), tokenize: paymentRequest.getTokenize() });
     };
 
     /**
@@ -225,13 +210,12 @@ const StorageService = () => {
     };
 
     return {
-        getSession,
-        getSessionDetails,
+        getSessionData,
         setSessionDetails,
         getPaymentContext,
         setPaymentContext,
-        getPaymentProduct,
-        setPaymentProduct,
+        getPaymentProductId,
+        setPaymentProductId,
         getEncryptedData,
         setEncryptedData,
         getAccountOnFileId,

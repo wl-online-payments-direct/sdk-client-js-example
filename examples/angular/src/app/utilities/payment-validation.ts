@@ -1,4 +1,4 @@
-import { PaymentProduct, PaymentRequest } from 'onlinepayments-sdk-client-js';
+import { PaymentProduct } from 'onlinepayments-sdk-client-js';
 import { AbstractControl, FormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import PaymentRequestUtility from '@shared/utilities/PaymentRequestUtility';
 
@@ -10,9 +10,9 @@ export class PaymentValidation {
         return null;
       }
 
-      const ids = (request as PaymentRequest).getErrorMessageIds?.() ?? [];
+      const validationResult = request.validate();
 
-      return ids.length ? { paymentError: ids } : null;
+      return !validationResult.isValid ? { paymentError: validationResult.errors } : null;
     };
   }
 

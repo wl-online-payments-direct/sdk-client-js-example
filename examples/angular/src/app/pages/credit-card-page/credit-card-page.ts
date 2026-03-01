@@ -1,13 +1,14 @@
-import { afterNextRender, Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import StorageService from '@shared/services/StorageService';
 import { Router, RouterLink } from '@angular/router';
 import {
-  AmountOfMoneyJSON,
-  ErrorResponseJSON,
+  AmountOfMoney,
+  init,
+  OnlinePaymentSdk,
   PaymentContextWithAmount,
   PaymentProduct,
-  Session,
+  SdkError,
 } from 'onlinepayments-sdk-client-js';
 import { LogoComponent } from '../../components/logo/logo';
 import { FormInput } from '../../components/form-elements/input/input';
@@ -18,6 +19,7 @@ import PaymentRequestUtility from '@shared/utilities/PaymentRequestUtility';
 import EncryptionService from '@shared/services/EncryptionService';
 import { AdditionalCardOperations } from '../../components/additional-card-operations/additional-card-operations';
 import { LoaderService } from '../../services/loader-service';
+import PaymentProductService from '@shared/services/PaymentProductService';
 
 type CreditCardPayment = {
   cardNumber: FormControl<string>;
@@ -47,9 +49,12 @@ export class CreditCardPage {
   @ViewChild('creditCardFormRef', { read: ElementRef })
   creditCardFormRef!: ElementRef<HTMLFormElement>;
 
-  session: Session | null = null;
-  paymentProduct: PaymentProduct | null = null;
+  sdk: OnlinePaymentSdk | null = null;
   paymentContext: PaymentContextWithAmount | null = StorageService.getPaymentContext();
+
+  paymentProduct: PaymentProduct | null = null;
+
+  isLoading: boolean = true;
 
   creditCardPayment = new FormGroup<CreditCardPayment>({
     cardNumber: new FormControl('', {
@@ -68,19 +73,40 @@ export class CreditCardPage {
     PaymentValidation.applyValidators(this.creditCardPayment, this.paymentProduct, fields);
   }
 
-  constructor(private loader: LoaderService) {
-    afterNextRender({ write: () => this.setupValidators() });
-  }
+  constructor(
+    private loader: LoaderService,
+    private cdr: ChangeDetectorRef,
+  ) {}
 
-  ngOnInit() {
+  async initData(): Promise<void> {
     this.loader.show();
-    this.session = new Session(StorageService.getSession()!);
-    this.paymentProduct = new PaymentProduct(StorageService.getPaymentProduct()!);
+    this.sdk = init(StorageService.getSessionData()!);
+
+    this.paymentProduct = await PaymentProductService.getPaymentProduct(
+      this.sdk,
+      Number(StorageService.getPaymentProductId()!),
+      StorageService.getPaymentContext()!,
+    );
+
+    if (!this.paymentProduct) {
+      void this.router.navigate(['/payment']);
+      return;
+    }
+
+    this.isLoading = false;
+    this.cdr.detectChanges();
+
+    this.setupValidators();
+
     this.loader.hide();
   }
 
+  ngOnInit() {
+    this.initData().catch((error) => console.log(error));
+  }
+
   getIinDetails(cardNumber: string) {
-    return this.session
+    return this.sdk
       ?.getIinDetails(cardNumber.replaceAll(' ', '').trim(), StorageService.getPaymentContext()!)
       .catch(() => null);
   }
@@ -99,19 +125,19 @@ export class CreditCardPage {
       },
     );
 
-    if (paymentRequest?.isValid()) {
+    if (paymentRequest?.validate().isValid) {
       this.getIinDetails(this.creditCardPayment.getRawValue()['cardNumber'])
         ?.then((details) => {
           if (details?.paymentProductId !== this.paymentProduct?.id) {
-            throw Error(`Entered card is not for ${this.paymentProduct?.json.displayHints.label}`);
+            throw Error(`Entered card is not for ${this.paymentProduct?.label}`);
           }
-          EncryptionService.encrypt(this.session as Session, paymentRequest)
+          EncryptionService.encrypt(this.sdk as OnlinePaymentSdk, paymentRequest)
             .then(() => {
               StorageService.setPaymentRequest(paymentRequest);
               void this.router.navigate(['/payment/finalize']);
             })
-            .catch((errors: ErrorResponseJSON) => {
-              this.errorMessage.set('Errors: ' + JSON.stringify(errors));
+            .catch((error: SdkError) => {
+              this.errorMessage.set('Errors: ' + JSON.stringify(error.metadata));
             });
         })
         .catch((error: Error) => {
@@ -132,11 +158,11 @@ export class CreditCardPage {
   }
 
   getAmountOfMoney() {
-    return this.paymentContext?.amountOfMoney as AmountOfMoneyJSON;
+    return this.paymentContext?.amountOfMoney as AmountOfMoney;
   }
 
-  hasField(id: string): boolean {
-    return !!this.paymentProduct?.json?.fields?.some((f) => f.id === id);
+  get hasCvvField(): boolean {
+    return !!this.paymentProduct?.getField('cvv');
   }
 
   hasCardNumberError() {
@@ -145,6 +171,10 @@ export class CreditCardPage {
 
   getCardNumber() {
     return this.creditCardPayment?.getRawValue().cardNumber ?? '';
+  }
+
+  get cardLabel(): string {
+    return this.paymentProduct?.label ?? '';
   }
 
   protected readonly NumberFormatter = NumberFormatter;

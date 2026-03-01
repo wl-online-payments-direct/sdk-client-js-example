@@ -8,21 +8,23 @@
         type PaymentContextWithAmount,
         PaymentProduct,
         PaymentRequest,
-        Session
+        OnlinePaymentSdk, init
     } from 'onlinepayments-sdk-client-js';
     import { translations } from '../translations/translations';
     import Logo from '../components/Logo/Logo.svelte';
     import { loader } from '../stores/loader';
     import { resolve } from '$app/paths';
+    import PaymentProductService from '@shared/services/PaymentProductService';
+    import Loader from '../components/Loader/Loader.svelte';
 
     let paymentContext: PaymentContextWithAmount | null = null;
     let paymentProduct: PaymentProduct | null = null;
-    let session: Session;
-    let paymentRequest: PaymentRequest | null = null;
+    let sdk: OnlinePaymentSdk;
     let isRecurring = false;
     let errorMessage = '';
     let paymentsClient: GooglePaymentsClient;
     let baseRequest: PaymentDataRequest;
+    let isLoading = true;
 
     /**
      * Creates a base PaymentDataRequest object for Google Pay.
@@ -51,17 +53,16 @@
      * @param {string} [token] - The token received from Google Pay.
      */
     const handleEncryptGooglePayData = (token?: string): void => {
-        if (!token || !paymentProduct || !session) {
+        if (!token || !paymentProduct || !sdk) {
             return;
         }
 
-        const pr = new PaymentRequest();
-        pr.setPaymentProduct(paymentProduct);
+        const pr = new PaymentRequest(paymentProduct);
         pr.setTokenize(isRecurring);
         pr.setValue('encryptedPaymentData', token);
 
-        if (pr.isValid()) {
-            EncryptionService.encrypt(session, pr)
+        if (pr.validate().isValid) {
+            EncryptionService.encrypt(sdk, pr)
                 .then(() => {
                     StorageService.setPaymentRequest(pr);
 
@@ -139,9 +140,9 @@
             });
     };
 
-    onMount(() => {
+    const initData = async () => {
         loader.show();
-        const s = StorageService.getSession();
+        const s = StorageService.getSessionData();
 
         if (!s) {
             goto(resolve('/'));
@@ -149,23 +150,29 @@
             return;
         }
 
-        const productJson = StorageService.getPaymentProduct();
+        const productId = StorageService.getPaymentProductId();
+        const context = StorageService.getPaymentContext()
 
-        if (!productJson) {
+        if (!productId || !context) {
             goto(resolve('/payment/'));
 
             return;
         }
 
         paymentContext = StorageService.getPaymentContext();
-        paymentProduct = new PaymentProduct(productJson);
-        session = new Session(s);
 
-        paymentRequest = new PaymentRequest();
-        paymentRequest.setPaymentProduct(paymentProduct);
+        sdk = init(s)
+
+        paymentProduct = await PaymentProductService.getPaymentProduct(sdk, productId, context)
+
+        if(!paymentProduct){
+            goto(resolve('/payment'));
+
+            return;
+        }
 
         baseRequest = createBaseRequest(
-            paymentProduct.paymentProduct320SpecificData?.networks ?? ['VISA', 'MASTERCARD']
+            paymentProduct?.paymentProduct320SpecificData?.networks ?? ['VISA', 'MASTERCARD']
         );
 
         paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
@@ -187,9 +194,17 @@
                 console.error(err);
                 errorMessage = 'Error loading Google Pay Integration';
             });
+
         loader.hide();
+        isLoading = false;
+    }
+
+    onMount(() => {
+        initData().catch(error => console.error(error))
     });
 </script>
+
+<Loader />
 
 <div class="page flex column center">
     <Logo />
@@ -208,7 +223,7 @@
         {translations.back_to_payment_method_selection}
     </a>
 
-    <div id="googlePay"></div>
+    <div id="googlePay" class="form form-max-height flex column center m-0 {isLoading ? 'invisible' : ''}"></div>
 
     <div class="error">{errorMessage}</div>
 </div>

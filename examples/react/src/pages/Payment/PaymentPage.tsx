@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    BasicPaymentItems,
+    BasicPaymentProducts,
+    CommunicationError,
+    init,
+    type OnlinePaymentSdk,
     type PaymentContext,
     type PaymentContextWithAmount,
-    Session,
-    type SessionDetails
+    type SdkError,
+    type SessionData
 } from 'onlinepayments-sdk-client-js';
 import { useNavigate } from 'react-router-dom';
 import { useLoader } from '../../components/Loader/Loader.tsx';
@@ -24,14 +27,9 @@ const PaymentContextInitialState = {
     isRecurring: false
 } satisfies PaymentContextWithAmount;
 
-type Error = {
-    message?: string;
-    status?: number;
-};
-
 const PaymentPage = () => {
-    const session = useRef<Session>(null);
-    const [paymentContext, setPaymentContext] = useState<PaymentContextWithAmount>(
+    const sdk = useRef<OnlinePaymentSdk>(null);
+    const [paymentContext, setPaymentContext] = useState<PaymentContext>(
         () => StorageService.getPaymentContext() ?? { ...PaymentContextInitialState }
     );
 
@@ -41,16 +39,16 @@ const PaymentPage = () => {
     const [isFormExpanded, setIsFormExpanded] = useState(true);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const [paymentMethods, setPaymentMethods] = useState<BasicPaymentItems>();
+    const [paymentMethods, setPaymentMethods] = useState<BasicPaymentProducts>();
 
     useEffect(() => {
         StorageService.clearItem('accountOnFileId');
-        const sessionDetails = StorageService.getSession();
+        const sessionData = StorageService.getSessionData();
 
-        if (!sessionDetails) {
+        if (!sessionData) {
             navigate('/');
         } else {
-            session.current = new Session(sessionDetails as SessionDetails);
+            sdk.current = init(sessionData as SessionData);
         }
     }, [navigate]);
 
@@ -58,8 +56,8 @@ const PaymentPage = () => {
         setIsFormExpanded((prev) => !prev);
     }, []);
 
-    const handleUnauthorizedError = (error: Error) => {
-        if (error?.status === 403) {
+    const handleUnauthorizedError = (error: SdkError) => {
+        if (error instanceof CommunicationError) {
             StorageService.clear();
             navigate('/');
         }
@@ -68,13 +66,13 @@ const PaymentPage = () => {
     const fetchPaymentProducts = useCallback(
         (paymentDetails: PaymentContext) => {
             show();
-            session?.current
-                ?.getBasicPaymentItems(paymentDetails)
-                .then((items) => {
-                    setPaymentMethods(items);
+            sdk?.current
+                ?.getBasicPaymentProducts(paymentDetails)
+                .then((basicPaymentProducts) => {
+                    setPaymentMethods(basicPaymentProducts);
                     setErrorMessage('');
                 })
-                .catch((error: Error) => {
+                .catch((error: SdkError) => {
                     setErrorMessage(error?.message ?? '');
                     handleUnauthorizedError(error);
                     setPaymentMethods(undefined);
@@ -89,14 +87,14 @@ const PaymentPage = () => {
 
     const setSelectedProduct = async (productId: number) => {
         show();
-        const paymentProduct = await session?.current?.getPaymentProduct(productId, paymentContext as PaymentContext);
+        const paymentProduct = await sdk?.current?.getPaymentProduct(productId, paymentContext as PaymentContext);
 
         if (!paymentProduct) {
             setErrorMessage(translations.payment_product_not_found);
             return;
         }
 
-        StorageService.setPaymentProduct(paymentProduct.json);
+        StorageService.setPaymentProductId(paymentProduct.id);
         hide();
 
         return paymentProduct;
@@ -107,7 +105,7 @@ const PaymentPage = () => {
 
         if (product?.paymentMethod === 'card') {
             navigate(`/payment/credit-card/`);
-        } else if (product?.paymentMethod === 'mobile' && product?.displayHints?.label === 'GOOGLEPAY') {
+        } else if (product?.paymentMethod === 'mobile' && product?.label === 'GOOGLEPAY') {
             navigate('/payment/google-pay/');
         } else {
             setErrorMessage(translations.this_demo_supports_only_card_payment_and_google_pay);
@@ -115,7 +113,8 @@ const PaymentPage = () => {
     };
 
     const handleAccountOnFileSelection = async (id: string) => {
-        const aof = paymentMethods?.accountOnFileById[id];
+        const aof = paymentMethods?.accountsOnFile.find((aof) => aof.id === id);
+
         if (aof) {
             const product = await setSelectedProduct(aof.paymentProductId);
 
@@ -128,10 +127,7 @@ const PaymentPage = () => {
         }
     };
 
-    const handlePaymentContextModelChange = <K extends keyof PaymentContextWithAmount>(
-        value: PaymentContextWithAmount[K],
-        prop: K
-    ) => {
+    const handlePaymentContextModelChange = <K extends keyof PaymentContext>(value: PaymentContext[K], prop: K) => {
         setPaymentContext?.((prev) => ({ ...(prev as PaymentContextWithAmount), [prop]: value }));
     };
 
@@ -156,15 +152,15 @@ const PaymentPage = () => {
                 onSaveContextToStorage={handleSaveContextToStorage}
             />
             <div className='flex row'>
-                {paymentMethods?.basicPaymentItems && paymentMethods.basicPaymentItems.length > 0 && (
+                {paymentMethods?.paymentProducts && paymentMethods.paymentProducts.length > 0 && (
                     <ProductSelection
-                        items={paymentMethods.basicPaymentItems}
+                        products={paymentMethods.paymentProducts}
                         onSelectedProduct={handleProductSelection}
                     />
                 )}
-                {paymentMethods && paymentMethods.accountOnFileById && paymentMethods.accountsOnFile.length > 0 && (
+                {paymentMethods && paymentMethods.accountsOnFile.length > 0 && (
                     <AccountOnFileSelection
-                        accountsOnFile={Object.values(paymentMethods.accountOnFileById)}
+                        accountsOnFile={paymentMethods.accountsOnFile}
                         onSelectedProduct={handleAccountOnFileSelection}
                     />
                 )}

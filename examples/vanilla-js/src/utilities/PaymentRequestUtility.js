@@ -19,8 +19,7 @@ const PaymentRequestUtility = () => {
      * @returns {sdk.PaymentRequest}
      */
     const get = (paymentProduct, key, value) => {
-        const paymentRequest = new sdk.PaymentRequest();
-        paymentRequest.setPaymentProduct(paymentProduct);
+        const paymentRequest = new sdk.PaymentRequest(paymentProduct);
         key && paymentRequest.setValue(key, value);
 
         return paymentRequest;

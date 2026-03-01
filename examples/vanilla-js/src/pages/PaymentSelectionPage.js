@@ -8,6 +8,7 @@ import PaymentDetails from './Partials/PaymentDetails.js';
 import PaymentProductsSelection from './Partials/PaymentProductsSelection.js';
 import Loader from '../components/Loader.js';
 import AccountsOnFileSelection from './Partials/AccountsOnFileSelection.js';
+import { CommunicationError } from 'onlinepayments-sdk-client-js';
 
 /**
  * Represents the Payment Selection Page.
@@ -20,8 +21,10 @@ import AccountsOnFileSelection from './Partials/AccountsOnFileSelection.js';
  * provides an interactive interface for users to select payment methods and finalize their choices.
  */
 const PaymentSelectionPage = () => {
-    let paymentProducts = [];
-    let paymentItems;
+    /** @type {sdk.BasicPaymentProducts} */
+    let basicPaymentProducts;
+
+    /** @type {sdk.OnlinePaymentSdk} */
     let session;
 
     /**
@@ -48,37 +51,12 @@ const PaymentSelectionPage = () => {
      * This function checks if the provided error object corresponds to a 403 HTTP status code.
      * If so, it clears stored data through the `StorageService` and redirects the user to the home page URL.
      *
-     * @param {Object} error - The error object potentially containing a response status code.
-     * @param {Object} error.response - The HTTP response object.
-     * @param {number} error.response.status - The HTTP response status code.
+     * @param {sdk.SdkError} error - The error object potentially containing a response status code.
      */
     const handleUnauthorizedError = (error) => {
-        if (error.response?.status === 403) {
+        if (error instanceof CommunicationError) {
             StorageService.clear();
             window.location = Pages.Home;
-        }
-    };
-
-    /**
-     * Uses SDK to fetch payment products based on the entered payment details.
-     *
-     * @param {sdk.PaymentContext} paymentDetails
-     * @returns {Promise<{id: string, label: string, logo: string, accountsOnFile}[]>}
-     */
-    const fetchPaymentProducts = (paymentDetails) => {
-        try {
-            return session.getBasicPaymentItems(paymentDetails).then((items) => {
-                paymentItems = items;
-
-                return items.basicPaymentItems.map((payment) => ({
-                    id: payment.id,
-                    label: payment.json.displayHints.label,
-                    logo: payment.json.displayHints.logo,
-                    accountsOnFile: payment.accountsOnFile || []
-                }));
-            });
-        } catch (e) {
-            handleUnauthorizedError(e);
         }
     };
 
@@ -94,9 +72,10 @@ const PaymentSelectionPage = () => {
     const onSetPaymentDetails = (paymentDetails) => {
         Loader.show();
         let errorMessage = '';
-        fetchPaymentProducts(paymentDetails)
+        session
+            .getBasicPaymentProducts(paymentDetails)
             .then((products) => {
-                paymentProducts = products;
+                basicPaymentProducts = products;
             })
             .catch((error) => {
                 handleUnauthorizedError(error);
@@ -104,17 +83,16 @@ const PaymentSelectionPage = () => {
             })
             .finally(() => {
                 const paymentProductSelectionAOF = document.getElementById('paymentProductSelectionAOF');
-                if (paymentProducts?.find((p) => p.accountsOnFile.length > 0)) {
+                if (basicPaymentProducts?.accountsOnFile.length > 0) {
                     paymentProductSelectionAOF.style.display = 'unset';
-                    AccountsOnFileSelection(
-                        Object.values(paymentItems.accountOnFileById),
-                        handleAccountOnFileSelected
-                    ).mount(paymentProductSelectionAOF);
+                    AccountsOnFileSelection(basicPaymentProducts.accountsOnFile, handleAccountOnFileSelected).mount(
+                        paymentProductSelectionAOF
+                    );
                 } else {
                     paymentProductSelectionAOF.style.display = 'none';
                 }
 
-                PaymentProductsSelection(paymentProducts, handleProductSelected).mount(
+                PaymentProductsSelection(basicPaymentProducts?.paymentProducts, handleProductSelected).mount(
                     document.getElementById('paymentProductSelection')
                 );
 
@@ -137,7 +115,7 @@ const PaymentSelectionPage = () => {
             return;
         }
 
-        StorageService.setPaymentProduct(paymentProduct);
+        StorageService.setPaymentProductId(paymentProduct.id);
         Loader.hide();
 
         return paymentProduct;
@@ -156,7 +134,7 @@ const PaymentSelectionPage = () => {
         const product = await setSelectedProduct(productId);
         if (product.paymentMethod === 'card') {
             window.location = Pages.CreditCard;
-        } else if (product.paymentMethod === 'mobile' && product.displayHints?.label === 'GOOGLEPAY') {
+        } else if (product.paymentMethod === 'mobile' && product?.label === 'GOOGLEPAY') {
             window.location = Pages.GooglePay;
         } else {
             document.getElementById('error').innerHTML = 'This payment product is not supported in this demo.';
@@ -172,7 +150,7 @@ const PaymentSelectionPage = () => {
      */
     const handleAccountOnFileSelected = async (aofId) => {
         Loader.show();
-        const aof = paymentItems.accountOnFileById[aofId];
+        const aof = basicPaymentProducts.accountsOnFile.find((aof) => aof.id === aofId);
 
         const product = await setSelectedProduct(aof.paymentProductId);
         StorageService.setAccountOnFileId(aofId);
@@ -192,11 +170,14 @@ const PaymentSelectionPage = () => {
      * @param {HTMLElement} mountingPoint
      */
     const mount = (mountingPoint) => {
-        session = StorageService.getSession();
-        if (!session) {
+        let sessionData = StorageService.getSessionData();
+
+        if (!sessionData) {
             window.location = Pages.Home;
             return;
         }
+
+        session = sdk.init(sessionData);
 
         mountingPoint.innerHTML = template;
 

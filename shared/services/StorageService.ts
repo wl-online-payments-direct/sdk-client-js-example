@@ -1,10 +1,5 @@
 import type { CardPaymentSpecificData } from '../types/CreatePaymentRequest';
-import {
-    type PaymentContextWithAmount,
-    type PaymentProductJSON,
-    type PaymentRequest,
-    type SessionDetails
-} from 'onlinepayments-sdk-client-js';
+import { type PaymentContextWithAmount, type PaymentRequest, type SessionData } from 'onlinepayments-sdk-client-js';
 
 const STORAGE_KEY = 'sdk-example-app-storage';
 
@@ -16,7 +11,7 @@ export type PaymentInfo = {
 const LocalStorageInitialData = {
     session: null,
     paymentContext: null,
-    paymentProduct: null,
+    paymentProductId: null,
     accountOnFileId: null,
     encryptedData: null,
     cardPaymentSpecificData: null,
@@ -24,9 +19,9 @@ const LocalStorageInitialData = {
 };
 
 type Storage = {
-    session: SessionDetails | null;
+    sessionData: SessionData | null;
     paymentContext: PaymentContextWithAmount | null;
-    paymentProduct: PaymentProductJSON | null;
+    paymentProductId: number | null;
     accountOnFileId: string | null;
     encryptedData: string | null;
     cardPaymentSpecificData: CardPaymentSpecificData | null;
@@ -65,16 +60,16 @@ const StorageService = () => {
         setItem(key, null);
     };
 
-    const setSession = (value: Storage['session']) => {
-        setItem('session', value);
+    const setSession = (value: Storage['sessionData']) => {
+        setItem('sessionData', value);
     };
 
     const setPaymentContext = (value: Storage['paymentContext']) => {
         setItem('paymentContext', value);
     };
 
-    const setPaymentProduct = (value: Storage['paymentProduct']) => {
-        setItem('paymentProduct', value);
+    const setPaymentProductId = (value: Storage['paymentProductId']) => {
+        setItem('paymentProductId', value);
     };
 
     const setAccountOnFileId = (value: Storage['accountOnFileId']) => {
@@ -91,21 +86,21 @@ const StorageService = () => {
 
     const setPaymentRequest = (value: PaymentRequest) => {
         setItem('paymentRequest', {
-            ...value?.getUnmaskedValues(),
+            ...value?.getValues(),
             tokenize: value?.getTokenize()
         });
     };
 
-    const getSession = (): Storage['session'] => {
-        return getItem('session');
+    const getSessionData = (): Storage['sessionData'] => {
+        return getItem('sessionData');
     };
 
     const getPaymentContext = (): Storage['paymentContext'] => {
         return getItem('paymentContext');
     };
 
-    const getPaymentProduct = (): Storage['paymentProduct'] => {
-        return getItem('paymentProduct');
+    const getPaymentProductId = (): Storage['paymentProductId'] => {
+        return getItem('paymentProductId');
     };
 
     const getAccountOnFileId = (): Storage['accountOnFileId'] => {
@@ -126,16 +121,16 @@ const StorageService = () => {
 
     return {
         getStorage,
-        getSession,
+        getSessionData,
         getAccountOnFileId,
         getEncryptedData,
         getCardPaymentSpecificData,
         getPaymentContext,
-        getPaymentProduct,
+        getPaymentProductId,
         setSession,
         setPaymentContext,
         setAccountOnFileId,
-        setPaymentProduct,
+        setPaymentProductId,
         setEncryptedData,
         setCardPaymentSpecificData,
         getPaymentRequest,

@@ -9,11 +9,12 @@
     import StorageService from '@shared/services/StorageService';
     import { loader } from '../stores/loader';
     import {
-        BasicPaymentItems,
         type PaymentContext,
         type PaymentContextWithAmount,
+        type OnlinePaymentSdk,
         PaymentProduct,
-        Session
+        init, BasicPaymentProducts, SdkError, CommunicationError
+
     } from 'onlinepayments-sdk-client-js';
     import Loader from '../components/Loader/Loader.svelte';
     import { resolve } from '$app/paths';
@@ -27,24 +28,22 @@
         isRecurring: false
     };
 
-    type ErrorType = { message?: string; status?: number };
-
-    let session: Session | null = null;
+    let sdk: OnlinePaymentSdk | null = null;
     let paymentContext: PaymentContextPartial = { ...PaymentContextInitialState };
     let isFormExpanded = true;
     let errorMessage = '';
-    let paymentMethods: BasicPaymentItems | undefined;
+    let paymentMethods: BasicPaymentProducts | undefined;
 
 
     onMount(() => {
-        const sessionDetails = StorageService.getSession();
+        const sessionDetails = StorageService.getSessionData();
         paymentContext = StorageService.getPaymentContext() ?? { ...PaymentContextInitialState };
         StorageService.clearItem('accountOnFileId');
 
         if (!sessionDetails) {
             goto(resolve('/'));
         } else {
-            session = new Session(sessionDetails);
+            sdk = init(sessionDetails);
         }
     });
 
@@ -58,14 +57,14 @@
     const fetchPaymentProducts = async (context: PaymentContext): Promise<void> => {
         loader.show();
         try {
-            if (!session) {
+            if (!sdk) {
                 return;
             }
 
-            paymentMethods = await session.getBasicPaymentItems(context);
+            paymentMethods = await sdk.getBasicPaymentProducts(context);
             errorMessage = '';
         } catch (err: unknown) {
-            const error = err as ErrorType;
+            const error = err as SdkError;
             errorMessage = error?.message ?? '';
             handleUnauthorizedError(error);
             paymentMethods = undefined;
@@ -92,12 +91,12 @@
     };
 
     /**
-     * Handles unauthorized errors by clearing storage and navigating to the home page.
+     * Handles unauthorized and communication errors by clearing storage and navigating to the home page.
      *
-     * @param {ErrorType} error - The error object.
+     * @param {SdkError} error - The error object.
      */
-    const handleUnauthorizedError = (error: ErrorType): void => {
-        if (error?.status === 403) {
+    const handleUnauthorizedError = (error: SdkError): void => {
+        if (error instanceof CommunicationError) {
             StorageService.clear();
 
             goto(resolve('/'));
@@ -112,7 +111,7 @@
      */
     const setSelectedProduct = async (productId: number): Promise<PaymentProduct | undefined> => {
         loader.show();
-        const paymentProduct = await session?.getPaymentProduct(productId, paymentContext as PaymentContext);
+        const paymentProduct = await sdk?.getPaymentProduct(productId, paymentContext as PaymentContext);
 
         if (!paymentProduct) {
             errorMessage = translations.payment_product_not_found;
@@ -121,7 +120,7 @@
             return;
         }
 
-        StorageService.setPaymentProduct(paymentProduct.json);
+        StorageService.setPaymentProductId(paymentProduct.id);
         loader.hide();
 
         return paymentProduct;
@@ -139,7 +138,7 @@
 
         if (product?.paymentMethod === 'card') {
             await goto(resolve('/payment/credit-card'));
-        } else if (product?.paymentMethod === 'mobile' && product?.displayHints?.label === 'GOOGLEPAY') {
+        } else if (product?.paymentMethod === 'mobile' && product?.label === 'GOOGLEPAY') {
             await goto(resolve('/payment/google-pay'));
         } else {
             errorMessage = translations.this_demo_supports_only_card_payment_and_google_pay;
@@ -154,7 +153,7 @@
      * @returns {Promise<void>}
      */
     const handleAccountOnFileSelection = async (id: string): Promise<void> => {
-        const aof = paymentMethods?.accountOnFileById[id];
+        const aof = paymentMethods?.accountsOnFile.find(aof => aof.id === id)
         if (!aof) {
             return;
         }
@@ -184,17 +183,17 @@
     />
 
     <div class="flex row">
-        {#if paymentMethods?.basicPaymentItems?.length}
+        {#if paymentMethods?.paymentProducts?.length}
             <ProductSelection
-                items={paymentMethods.basicPaymentItems}
+                products= {paymentMethods.paymentProducts}
                 onSelectedProduct={handleProductSelection}
             />
         {/if}
 
-        {#if paymentMethods?.accountOnFileById && Object.keys(paymentMethods.accountOnFileById).length > 0}
+        {#if paymentMethods && paymentMethods.accountsOnFile?.length > 0}
             <div class="flex-expand">
                 <AccountsOnFileSelection
-                    accountsOnFile={Object.values(paymentMethods.accountOnFileById)}
+                    accountsOnFile={paymentMethods.accountsOnFile}
                     onSelectedProduct={handleAccountOnFileSelection}
                 />
             </div>

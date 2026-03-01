@@ -1,9 +1,9 @@
 import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { ErrorResponse, SessionData } from 'onlinepayments-sdk-client-js';
 import { FormInput } from '../../components/form-elements/input/input';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api-service';
-import { ErrorResponseJSON, SessionDetails } from 'onlinepayments-sdk-client-js';
 import { LogoComponent } from '../../components/logo/logo';
 import StorageService from '@shared/services/StorageService';
 import { useMockApi } from '../../../config';
@@ -41,7 +41,7 @@ export class SessionPage {
   constructor(private loader: LoaderService) {}
 
   ngOnInit() {
-    const sessionDetails = StorageService.getSession();
+    const sessionDetails = StorageService.getSessionData();
     if (sessionDetails) {
       this.sessionDetails.patchValue(sessionDetails, {
         emitEvent: false,
@@ -52,7 +52,7 @@ export class SessionPage {
   handleSubmit() {
     this.sessionFormRef.nativeElement.reportValidity();
     if (this.sessionDetails.valid) {
-      const newSessionDetails: SessionDetails = { ...this.sessionDetails.getRawValue() };
+      const newSessionDetails: SessionData = { ...this.sessionDetails.getRawValue() };
 
       StorageService.clear();
       StorageService.setSession(newSessionDetails);
@@ -86,18 +86,19 @@ export class SessionPage {
     this.apiService
       .getSession()
       .then((response) => {
-        const sessionDetails: SessionDetails = {
+        const sessionDetails: SessionData = {
           clientSessionId: response.clientSessionId,
           clientApiUrl: response.clientApiUrl,
           assetUrl: response.assetUrl,
           customerId: response.customerId,
         };
+
         this.sessionDetails.setValue(sessionDetails, { emitEvent: false });
       })
-      .catch((error: ErrorResponseJSON) => {
+      .catch((error: ErrorResponse) => {
         if (error.errors?.length) {
           this.errorMessage.set(
-            'Errors while fetching data: ' + error.errors.map((error) => error.message).join(', '),
+            'Errors while fetching data: ' + error.errors.map((err) => err.message).join(', '),
           );
         } else {
           this.errorMessage.set('There was an error fetching data. Did you start the mock API?');

@@ -1,8 +1,14 @@
 import { Component, ElementRef, inject, signal, ViewChild, WritableSignal } from '@angular/core';
 import StorageService from '@shared/services/StorageService';
 import { Router } from '@angular/router';
+import {
+  BasicPaymentProducts,
+  CommunicationError,
+  init,
+  type OnlinePaymentSdk,
+  SdkError,
+} from 'onlinepayments-sdk-client-js';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { AccountOnFile, BasicPaymentItems, Session } from 'onlinepayments-sdk-client-js';
 import { FormInput } from '../../components/form-elements/input/input';
 import { LogoComponent } from '../../components/logo/logo';
 import { FormSelect } from '../../components/form-elements/select/select';
@@ -12,11 +18,6 @@ import { ProductSelection } from '../../components/product-selection/product-sel
 import { AccountOnFileSelection } from '../../components/account-on-file-selection/account-on-file-selection';
 import { Checkbox } from '../../components/form-elements/checkbox/checkbox';
 import { LoaderService } from '../../services/loader-service';
-
-type Error = {
-  message?: string;
-  status?: number;
-};
 
 type PaymentContextForm = {
   amountOfMoney: FormGroup<{
@@ -48,7 +49,7 @@ export class PaymentPage {
   @ViewChild('paymentContextFormRef', { read: ElementRef })
   paymentContextFormRef!: ElementRef<HTMLFormElement>;
 
-  session: Session | null = null;
+  sdk: OnlinePaymentSdk | null = null;
 
   paymentContext = new FormGroup<PaymentContextForm>({
     amountOfMoney: new FormGroup({
@@ -64,16 +65,16 @@ export class PaymentPage {
 
   errorMessage = signal('');
   isFormExpanded = signal(true);
-  paymentMethods: WritableSignal<BasicPaymentItems | null> = signal(null);
+  paymentMethods: WritableSignal<BasicPaymentProducts | null> = signal(null);
 
   constructor(private loader: LoaderService) {}
 
   ngOnInit() {
-    this.session = new Session(StorageService.getSession()!);
+    this.sdk = init(StorageService.getSessionData()!);
   }
 
-  handleUnauthorizedError(error: Error) {
-    if (error?.status === 403) {
+  handleUnauthorizedError(error: SdkError) {
+    if (error instanceof CommunicationError) {
       StorageService.clear();
       void this.router.navigate(['/']);
     }
@@ -95,14 +96,14 @@ export class PaymentPage {
 
   fetchPaymentProducts() {
     this.loader.show();
-    this.session
-      ?.getBasicPaymentItems(this.getContext())
-      .then((items) => {
-        this.paymentMethods.set(items);
+    this.sdk
+      ?.getBasicPaymentProducts(this.getContext())
+      .then((basicProducts) => {
+        this.paymentMethods.set(basicProducts);
         this.errorMessage.set('');
         this.handleExpandCollapse();
       })
-      .catch((error: Error) => {
+      .catch((error: SdkError) => {
         this.errorMessage.set(error?.message ?? '');
         this.handleUnauthorizedError(error);
         this.paymentMethods.set(null);
@@ -122,14 +123,14 @@ export class PaymentPage {
 
   async setSelectedProduct(productId: number) {
     this.loader.show();
-    const paymentProduct = await this.session?.getPaymentProduct(productId, this.getContext());
+    const paymentProduct = await this.sdk?.getPaymentProduct(productId, this.getContext());
 
     if (!paymentProduct) {
       this.errorMessage.set('Payment product not found.');
       return;
     }
 
-    StorageService.setPaymentProduct(paymentProduct.json);
+    StorageService.setPaymentProductId(paymentProduct.id);
     this.loader.hide();
 
     return paymentProduct;
@@ -140,10 +141,7 @@ export class PaymentPage {
 
     if (product?.paymentMethod === 'card') {
       void this.router.navigate(['/payment/credit-card']);
-    } else if (
-      product?.paymentMethod === 'mobile' &&
-      product?.displayHints?.label === 'GOOGLEPAY'
-    ) {
+    } else if (product?.paymentMethod === 'mobile' && product?.label === 'GOOGLEPAY') {
       void this.router.navigate(['/payment/google-pay']);
     } else {
       this.errorMessage.set('This payment product is not supported in this demo.');
@@ -151,7 +149,7 @@ export class PaymentPage {
   }
 
   async handleAccountOnFileChange(id: string) {
-    const aof = this.paymentMethods()?.accountOnFileById[id];
+    const aof = this.paymentMethods()?.accountsOnFile.find((aof) => aof.id === id);
     if (aof) {
       const product = await this.setSelectedProduct(aof.paymentProductId);
       StorageService.setAccountOnFileId(id.toString());
@@ -161,11 +159,5 @@ export class PaymentPage {
         this.errorMessage.set('This demo supports only card payment products.');
       }
     }
-  }
-
-  getAccountsOnFileById() {
-    return Object.values(this.paymentMethods()?.accountOnFileById ?? {}).filter(
-      (x): x is AccountOnFile => x !== undefined,
-    );
   }
 }

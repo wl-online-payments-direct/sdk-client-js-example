@@ -1,17 +1,26 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLoader } from '../../components/Loader/Loader.tsx';
-import type { AccountOnFile, PaymentContextWithAmount } from 'onlinepayments-sdk-client-js';
-import { PaymentProduct } from 'onlinepayments-sdk-client-js';
+import {
+    type AccountOnFile,
+    init,
+    type OnlinePaymentSdk,
+    type PaymentContextWithAmount,
+    PaymentProduct,
+    type SessionData
+} from 'onlinepayments-sdk-client-js';
 import StorageService from '@shared/services/StorageService';
 import NumberFormatter from '@shared/utilities/NumberFormatter';
 import Logo from '../../components/Logo/Logo.tsx';
 import Input from '../../components/FormFields/Input/Input.tsx';
 import translations from '../../translations/translations.ts';
 import PaymentRequestUtility from '@shared/utilities/PaymentRequestUtility';
+import PaymentProductService from '@shared/services/PaymentProductService.ts';
 
 const AccountOnFilePage = () => {
     const navigate = useNavigate();
+    const sdk = useRef<OnlinePaymentSdk>(null);
+
     const { show, hide } = useLoader();
 
     const [paymentContext, setPaymentContext] = useState<PaymentContextWithAmount>();
@@ -19,24 +28,54 @@ const AccountOnFilePage = () => {
 
     const [accountOnFile, setAccountOnFile] = useState<AccountOnFile>();
     const [cvv, setCvv] = useState<string>();
-    const [error, setError] = useState<boolean>(false);
+    const [error, setError] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        show();
-        if (!StorageService.getSession()) {
+        const initData = async () => {
+            show();
+
+            const sessionData = StorageService.getSessionData();
+            const paymentContext = StorageService.getPaymentContext();
+
+            if (!sessionData || !paymentContext) {
+                hide();
+                navigate('/');
+                return;
+            }
+
+            sdk.current = init(sessionData);
+            setPaymentContext(paymentContext);
+
+            const accountOnFileId = StorageService.getAccountOnFileId();
+            const paymentProductId = StorageService.getPaymentProductId();
+
+            if (!accountOnFileId || !paymentProductId) {
+                hide();
+                navigate('/payment');
+                return;
+            }
+
+            sdk.current = init(sessionData as SessionData);
+
+            const product = await PaymentProductService.getPaymentProduct(
+                sdk.current,
+                Number(paymentProductId),
+                paymentContext
+            );
+
+            if (!product) {
+                hide();
+                navigate('/payment');
+                return;
+            }
+
+            setPaymentProduct(product);
             hide();
-            navigate('/');
-        }
+        };
 
-        if (!StorageService.getAccountOnFileId() || !StorageService.getPaymentProduct()) {
-            hide();
-            navigate(`/payment/`);
-        }
-
-        const product = new PaymentProduct(StorageService.getPaymentProduct()!);
-        setPaymentProduct({ ...product } as PaymentProduct);
-
-        hide();
+        initData().catch((error) => console.error(error));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -45,18 +84,19 @@ const AccountOnFilePage = () => {
             return;
         }
 
-        if (StorageService.getPaymentContext()) {
-            setPaymentContext(StorageService.getPaymentContext()!);
-        }
+        setIsLoading(false);
 
-        setAccountOnFile(paymentProduct?.accountOnFileById?.[StorageService.getAccountOnFileId()!]);
+        const accountOnFileId = StorageService.getAccountOnFileId();
+        if (accountOnFileId) {
+            setAccountOnFile(paymentProduct.accountsOnFile.find((aof) => aof.id === accountOnFileId));
+        }
     }, [paymentProduct]);
 
     const handleChangeCvv = (value: string, key: string) => {
         const paymentRequest = PaymentRequestUtility.get(paymentProduct, key, value);
 
-        const maskedCvv = paymentRequest?.getMaskedValue(key);
-        if (paymentRequest?.getErrorMessageIds()?.length) {
+        const maskedCvv = paymentRequest?.getField(key).getMaskedValue();
+        if (!paymentRequest?.getField(key).validate().isValid) {
             setError(true);
         } else {
             setError(false);
@@ -69,19 +109,21 @@ const AccountOnFilePage = () => {
         const paymentRequest = PaymentRequestUtility.get(
             paymentProduct,
             'expiryDate',
-            accountOnFile?.attributeByKey?.['expiryDate']?.value
+            accountOnFile?.getValue('expiryDate')
         );
 
-        return paymentRequest?.getMaskedValue('expiryDate') ?? '';
+        return paymentRequest?.getField('expiryDate').getMaskedValue() ?? '';
     };
 
     const handleProcessPayment = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const paymentRequest = PaymentRequestUtility.get(paymentProduct, 'cvv', cvv)!;
-        accountOnFile && paymentRequest.setAccountOnFile(accountOnFile);
+        if (accountOnFile) {
+            paymentRequest.setAccountOnFile(accountOnFile);
+        }
 
-        if (paymentRequest.isValid() && accountOnFile && cvv && paymentProduct?.id) {
+        if (paymentRequest.validate().isValid && accountOnFile && cvv && paymentProduct?.id) {
             StorageService.setPaymentRequest(paymentRequest);
 
             StorageService.setCardPaymentSpecificData({
@@ -90,7 +132,7 @@ const AccountOnFilePage = () => {
                 paymentProductId: paymentProduct.id
             });
 
-            navigate('/payment/finalize/');
+            navigate('/payment/finalize');
         }
     };
 
@@ -112,17 +154,17 @@ const AccountOnFilePage = () => {
                 </strong>
             </p>
             <p className='self-start m-0'>
-                {translations.selected_card_type} {paymentProduct?.json?.displayHints?.label}
+                {translations.selected_card_type} {paymentProduct?.label}
             </p>
             <Link to='/payment' className='button link self-start'>
                 {translations.back_to_payment_method_selection}
             </Link>
-            <form className='form' id='creditCardForm' onSubmit={handleProcessPayment}>
+            <form className={`form form-max-height ${!isLoading ? '' : 'invisible'}`} onSubmit={handleProcessPayment}>
                 <Input
                     id='cardNumber'
                     type='text'
                     label={translations.card_number}
-                    value={accountOnFile?.getLabel()?.formattedValue ?? ''}
+                    value={accountOnFile?.label ?? ''}
                     disabled={true}
                     required={true}
                 />
@@ -135,7 +177,7 @@ const AccountOnFilePage = () => {
                         disabled={true}
                         required={true}
                     />
-                    {paymentProduct?.json?.fields.find((field) => field.id === 'cvv') && (
+                    {paymentProduct?.fields.find((field) => field.id === 'cvv') && (
                         <Input
                             id='cvv'
                             value={cvv}
@@ -151,7 +193,7 @@ const AccountOnFilePage = () => {
                     id='cardholderName'
                     type='text'
                     label={translations.cardholder_name}
-                    value={accountOnFile?.attributeByKey['cardholderName']?.value ?? ''}
+                    value={accountOnFile?.getValue('cardholderName') ?? ''}
                     disabled={true}
                     required={true}
                 />

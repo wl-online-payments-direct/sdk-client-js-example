@@ -1,19 +1,22 @@
-import { PaymentContextWithAmount, PaymentRequest, Session } from 'onlinepayments-sdk-client-js';
+import { OnlinePaymentSdk, PaymentContextWithAmount, PaymentRequest } from 'onlinepayments-sdk-client-js';
 import { getSupportedIinDetails } from './get-supported-iin-details';
 
-export async function createPayload(session: Session, cardNumber: string, paymentContext: PaymentContextWithAmount) {
+export async function createPayload(
+    sdk: OnlinePaymentSdk,
+    cardNumber: string,
+    paymentContext: PaymentContextWithAmount
+) {
     // get payment product from IIN details
-    const { paymentProductId } = await getSupportedIinDetails(session, cardNumber, paymentContext);
+    const { paymentProductId } = await getSupportedIinDetails(sdk, cardNumber, paymentContext);
     if (typeof paymentProductId === 'undefined') {
         throw new Error(`Failed getting IinDetails, paymentProductId is not defined`);
     }
 
     // get payment product
-    const paymentProduct = await session.getPaymentProduct(paymentProductId, paymentContext);
+    const paymentProduct = await sdk.getPaymentProduct(paymentProductId, paymentContext);
 
     // update session payment request instance
-    const paymentRequest = new PaymentRequest();
-    paymentRequest.setPaymentProduct(paymentProduct);
+    const paymentRequest = new PaymentRequest(paymentProduct);
     paymentRequest.setValue('cardNumber', cardNumber);
     paymentRequest.setValue('cvv', '123');
     paymentRequest.setValue('cardholderName', 'John Doe');
@@ -26,12 +29,14 @@ export async function createPayload(session: Session, cardNumber: string, paymen
     );
 
     // validate payment request
-    if (!paymentRequest.isValid()) {
-        throw new Error(`Errors found in ${paymentRequest.getErrorMessageIds()}`);
+    const validationResult = paymentRequest.validate();
+
+    if (!validationResult.isValid) {
+        throw new Error(`Errors found in ${validationResult.errors}`);
     }
 
     // encrypt the payment request
-    const encryptor = session.getEncryptor();
+    const encryptionData = await sdk.encryptPaymentRequest(paymentRequest);
 
-    return encryptor.encrypt(paymentRequest);
+    return encryptionData.encryptedCustomerInput;
 }

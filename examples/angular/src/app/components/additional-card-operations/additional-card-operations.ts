@@ -1,6 +1,7 @@
 import { Component, Input, signal } from '@angular/core';
-import { AmountOfMoneyJSON, ErrorResponseJSON, Session } from 'onlinepayments-sdk-client-js';
+import { AmountOfMoney, type OnlinePaymentSdk, SdkError } from 'onlinepayments-sdk-client-js';
 import { LoaderService } from '../../services/loader-service';
+import ErrorService from '@shared/services/ErrorService';
 
 type CardOperations = {
   currencyConversions: string[];
@@ -20,11 +21,11 @@ type CardOperationsErrorMessages = {
   styleUrls: ['./additional-card-operations.css'],
 })
 export class AdditionalCardOperations {
-  @Input() session: Session | null = null;
+  @Input() sdk: OnlinePaymentSdk | null = null;
   @Input() cardNumber = '';
   @Input() cardNumberError = false;
   @Input() paymentProductId?: number;
-  @Input({ required: true }) amountOfMoney!: AmountOfMoneyJSON;
+  @Input({ required: true }) amountOfMoney!: AmountOfMoney;
 
   cardOperations = signal<CardOperations>({
     currencyConversions: [],
@@ -56,7 +57,7 @@ export class AdditionalCardOperations {
   private processCurrencyConversion(cardNumber: string): void {
     this.loader.show();
 
-    this.session
+    this.sdk
       ?.getCurrencyConversionQuote(this.amountOfMoney, {
         partialCreditCardNumber: cardNumber,
         paymentProductId: this.paymentProductId,
@@ -81,12 +82,12 @@ export class AdditionalCardOperations {
           }));
         }
       })
-      .catch((response: ErrorResponseJSON) => {
-        if (response?.errors?.length) {
-          const errors = response.errors.flatMap((e) => (e.message ? [e.message] : []));
+      .catch((error: SdkError) => {
+        const errorMessages = ErrorService.extractErrorMessages(error);
+        if (errorMessages.length) {
           this.cardOperationsErrors.update((prev) => ({
             ...prev,
-            currencyConversions: [...prev.currencyConversions, ...errors],
+            currencyConversions: [...prev.currencyConversions, ...errorMessages],
           }));
         }
       })
@@ -113,7 +114,7 @@ export class AdditionalCardOperations {
   private processSurcharge(cardNumber: string): void {
     this.loader.show();
 
-    this.session
+    this.sdk
       ?.getSurchargeCalculation(this.amountOfMoney, {
         partialCreditCardNumber: cardNumber,
         paymentProductId: this.paymentProductId,
@@ -137,12 +138,12 @@ export class AdditionalCardOperations {
           }
         }
       })
-      .catch((response: ErrorResponseJSON) => {
-        if (response?.errors?.length) {
-          const errors = response.errors.flatMap((e) => (e.message ? [e.message] : []));
+      .catch((error: SdkError) => {
+        const errorMessages = ErrorService.extractErrorMessages(error);
+        if (errorMessages.length) {
           this.cardOperationsErrors.update((prev) => ({
             ...prev,
-            surcharges: [...prev.surcharges, ...errors],
+            surcharges: [...prev.surcharges, ...errorMessages],
           }));
         }
       })

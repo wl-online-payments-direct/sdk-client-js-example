@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import type { ErrorResponseJSON, SessionDetails } from 'onlinepayments-sdk-client-js';
+import { type ErrorResponse, type SessionData } from 'onlinepayments-sdk-client-js';
 import { useNavigate } from 'react-router-dom';
 import { mockApiUrl, useMockApi } from '../../config.ts';
 import { useLoader } from '../../components/Loader/Loader.tsx';
@@ -14,7 +14,7 @@ const SessionInitialState = {
     clientApiUrl: '',
     customerId: '',
     assetUrl: ''
-} satisfies Partial<SessionDetails>;
+} satisfies Partial<SessionData>;
 
 const SessionPage = () => {
     const apiService = ApiService(mockApiUrl);
@@ -22,13 +22,14 @@ const SessionPage = () => {
 
     const navigate = useNavigate();
 
-    const [sessionDetails, setSessionDetails] = useState<Partial<SessionDetails>>({ ...SessionInitialState });
+    const [sessionDetails, setSessionDetails] = useState<Partial<SessionData>>({ ...SessionInitialState });
 
     const { show, hide } = useLoader();
 
     useEffect(() => {
-        if (StorageService.getSession()) {
-            setSessionDetails(StorageService.getSession()!);
+        const sessionData = StorageService.getSessionData();
+        if (sessionData) {
+            setSessionDetails(sessionData);
         }
     }, []);
 
@@ -39,10 +40,10 @@ const SessionPage = () => {
         apiService
             .getSession()
             .then((response) => setSessionDetails?.(response))
-            .catch((error: ErrorResponseJSON) => {
+            .catch((error: ErrorResponse) => {
                 if (error.errors?.length) {
                     errorMessage =
-                        translations.errors_while_fetching_data + error.errors.map((error) => error.message).join(', ');
+                        translations.errors_while_fetching_data + error.errors.map((err) => err.message).join(', ');
                 } else {
                     errorMessage = translations.there_was_an_error_fetching_data_did_you_mock_api;
                 }
@@ -76,7 +77,7 @@ const SessionPage = () => {
         });
     };
 
-    const handleChangeSessionDetails = (value: string, prop: keyof SessionDetails) => {
+    const handleChangeSessionDetails = (value: string, prop: keyof SessionData) => {
         setSessionDetails?.((prev) => ({
             ...prev,
             [prop]: value
@@ -95,7 +96,7 @@ const SessionPage = () => {
             setErrorMessage(translations.please_fill_in_all_the_data);
         } else {
             StorageService.clear();
-            StorageService.setSession(sessionDetails as SessionDetails);
+            StorageService.setSession(sessionDetails as SessionData);
 
             navigate('/payment');
         }

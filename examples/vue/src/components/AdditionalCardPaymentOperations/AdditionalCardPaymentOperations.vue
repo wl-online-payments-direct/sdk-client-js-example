@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import translations from '../../translations/translations.ts';
-import type { AmountOfMoneyJSON, ErrorResponseJSON, Session } from 'onlinepayments-sdk-client-js';
+import type { AmountOfMoney, OnlinePaymentSdk, SdkError } from 'onlinepayments-sdk-client-js';
 import LoaderService from '../../services/LoaderService.ts';
+import ErrorService from '@shared/services/ErrorService.ts';
 
 type CardOperations = {
     currencyConversions: string[];
@@ -25,11 +26,11 @@ const CardOperationsErrorInitialState: CardOperationsErrorMessages = {
 };
 
 const props = defineProps<{
-    session?: Session;
+    sdk?: OnlinePaymentSdk;
     cardNumber: string;
     cardNumberError: boolean;
     paymentProductId?: number;
-    amountOfMoney: AmountOfMoneyJSON;
+    amountOfMoney: AmountOfMoney;
 }>();
 
 const cardOperations = ref<CardOperations>({ ...CardOperationsInitialState });
@@ -59,7 +60,7 @@ const handleClickSurcharge = () => {
 const processSurcharge = async (cardNumber: string) => {
     LoaderService.show();
     try {
-        const response = await props.session?.getSurchargeCalculation(props.amountOfMoney, {
+        const response = await props.sdk?.getSurchargeCalculation(props.amountOfMoney, {
             partialCreditCardNumber: cardNumber,
             paymentProductId: props.paymentProductId
         });
@@ -74,11 +75,10 @@ const processSurcharge = async (cardNumber: string) => {
             });
         }
     } catch (e) {
-        const error = e as ErrorResponseJSON;
-        if (error?.errors?.length) {
-            const errorMessage = error.errors
-                .map((error) => error.message)
-                .filter((message): message is string => !!message);
+        const error = e as SdkError;
+        const errorMessage = ErrorService.extractErrorMessages(error);
+
+        if (errorMessage.length) {
             cardOperationsErrors.value.surcharges.push(...errorMessage);
         }
     } finally {
@@ -100,7 +100,7 @@ const handleClickCurrencyConversion = () => {
 const processCurrencyConversion = async (cardNumber: string) => {
     LoaderService.show();
     try {
-        const response = await props.session?.getCurrencyConversionQuote(props.amountOfMoney, {
+        const response = await props.sdk?.getCurrencyConversionQuote(props.amountOfMoney, {
             partialCreditCardNumber: cardNumber,
             paymentProductId: props.paymentProductId
         });
@@ -115,12 +115,11 @@ const processCurrencyConversion = async (cardNumber: string) => {
             cardOperations.value.currencyConversions.push(`Rate: ${response.proposal.rate.exchangeRate}`);
         }
     } catch (e) {
-        const error = e as ErrorResponseJSON;
-        if (error?.errors?.length) {
-            const errorMessages = error.errors
-                .map((error) => error.message)
-                .filter((message): message is string => !!message);
-            cardOperationsErrors.value.currencyConversions.push(...errorMessages);
+        const error = e as SdkError;
+        const errorMessage = ErrorService.extractErrorMessages(error);
+
+        if (errorMessage.length) {
+            cardOperationsErrors.value.currencyConversions.push(...errorMessage);
         }
     } finally {
         LoaderService.hide();

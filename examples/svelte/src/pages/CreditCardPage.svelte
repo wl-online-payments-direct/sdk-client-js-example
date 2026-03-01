@@ -10,12 +10,19 @@
     import PaymentRequestUtility from '@shared/utilities/PaymentRequestUtility';
     import EncryptionService from '@shared/services/EncryptionService';
     import { translations } from '../translations/translations';
-    import { type PaymentContextWithAmount, PaymentProduct, Session } from 'onlinepayments-sdk-client-js';
+    import {
+        type PaymentContextWithAmount,
+        PaymentProduct,
+        type OnlinePaymentSdk,
+        init
+    } from 'onlinepayments-sdk-client-js';
     import { loader } from '../stores/loader';
     import { resolve } from '$app/paths';
+    import PaymentProductService from '@shared/services/PaymentProductService';
+    import Loader from '../components/Loader/Loader.svelte';
 
-    let session: Session | null = null;
-    let paymentProduct: PaymentProduct;
+    let sdk: OnlinePaymentSdk | null = null;
+    let paymentProduct: PaymentProduct | null = null;
     let paymentContext: PaymentContextWithAmount | undefined;
 
     let paymentModel = {
@@ -34,23 +41,52 @@
 
     let modelErrorMessage = '';
     let isRecurring = false;
+    let isLoading = true;
 
-    onMount(() => {
+    const initData = async () => {
         loader.show();
-        const sessionDetails = StorageService.getSession();
-        const productData = StorageService.getPaymentProduct();
+        const sessionDetails = StorageService.getSessionData();
+        const productId = StorageService.getPaymentProductId();
         const contextData = StorageService.getPaymentContext();
 
-        if (!sessionDetails || !productData) {
+        if (!sessionDetails || !contextData) {
             goto(resolve('/'));
 
             return;
         }
 
-        session = new Session(sessionDetails);
-        paymentProduct = new PaymentProduct(productData);
+        if(!productId){
+            goto(resolve('/payment'));
+
+            return;
+        }
+
         paymentContext = contextData as PaymentContextWithAmount;
+
+        sdk = init(sessionDetails);
+
+        if (productId) {
+            paymentProduct = await PaymentProductService.getPaymentProduct(
+                sdk,
+                productId,
+                paymentContext
+            );
+
+            if (paymentProduct) {
+                loader.hide();
+                isLoading = false;
+
+                return;
+            }
+        }
+
+
         loader.hide();
+        goto(resolve('/payment'));
+    }
+
+    onMount(() => {
+        initData().catch(error => console.log(error))
     });
 
     /**
@@ -60,8 +96,9 @@
      */
     const getIinDetails = async (cardNumber: string) => {
         try {
-            return await session!.getIinDetails(cardNumber.replace(/\s+/g, '').trim(), paymentContext);
+            return await sdk!.getIinDetails(cardNumber.replace(/\s+/g, '').trim(), paymentContext!);
         } catch (e) {
+            console.log(e)
             return null;
         }
     };
@@ -80,18 +117,20 @@
         if (!paymentRequest) {
             return false;
         }
-        if (paymentRequest.getErrorMessageIds()?.length) {
+
+        if (!paymentRequest.getField(key).validate().isValid) {
             error = true;
         } else {
             error = false;
             if (key === 'cardNumber' && value.length > 5) {
                 getIinDetails(value).then((details) => {
-                    if (!details || details.paymentProductId !== paymentProduct.id) {
+                    if (!details || details.paymentProductId !== paymentProduct?.id) {
                         error = true;
                     }
                 });
             }
         }
+
         return error;
     };
 
@@ -108,14 +147,17 @@
         }
 
         paymentRequest.setValue(key, value);
-        const maskedValue = paymentRequest.getMaskedValue(key) ?? value;
+        const maskedValue = paymentRequest.getField(key).getMaskedValue() ?? value;
         paymentModel = { ...paymentModel, [key]: maskedValue };
     };
 
-    $: modelErrors.cardNumber = validateField('cardNumber', paymentModel.cardNumber);
-    $: modelErrors.cvv = validateField('cvv', paymentModel.cvv);
-    $: modelErrors.cardholderName = validateField('cardholderName', paymentModel.cardholderName);
-    $: modelErrors.expiryDate = validateField('expiryDate', paymentModel.expiryDate);
+    const handleMaskedInputChange = <K extends keyof typeof paymentModel> (key: K, e: Event) => {
+        const value = (e.target as HTMLInputElement).value;
+
+        handleMask(key, value);
+
+        modelErrors[key] = validateField(key, value)
+    }
 
     /**
      * Handles submission of the credit card payment form.
@@ -127,7 +169,7 @@
         const paymentRequest = PaymentRequestUtility.get(paymentProduct);
         paymentRequest!.setTokenize(isRecurring);
 
-        if (!paymentProduct || !session || !paymentRequest) {
+        if (!paymentProduct || !sdk || !paymentRequest) {
             return;
         }
 
@@ -135,9 +177,9 @@
             paymentRequest.setValue(key, paymentModel[key]);
         });
 
-        if (paymentRequest.isValid()) {
+        if (paymentRequest.validate().isValid) {
             try {
-                await EncryptionService.encrypt(session, paymentRequest);
+                await EncryptionService.encrypt(sdk, paymentRequest);
                 StorageService.setPaymentRequest(paymentRequest);
 
                 await goto(resolve('/payment/finalize'));
@@ -154,6 +196,8 @@
     };
 </script>
 
+<Loader />
+
 <div class="page flex column center">
     <Logo />
     <h1 class="m-0">{translations.pay_with_a_credit_card}</h1>
@@ -169,18 +213,18 @@
     </p>
 
     <p class="self-start m-0">
-        {translations.selected_card_type} {paymentProduct?.json?.displayHints?.label}
+        {translations.selected_card_type} {paymentProduct?.label}
     </p>
 
     <a class="button link self-start" href={resolve('/payment')}>{translations.back_to_payment_method_selection}</a>
 
-    <form class="form" id="creditCardForm" on:submit|preventDefault={handleProcessPayment}>
+    <form  class="form form-max-height {isLoading ? 'invisible' : ''}"  on:submit|preventDefault={handleProcessPayment}>
         <Input
             id="cardNumber"
             type="text"
             label={translations.card_number}
             bind:value={paymentModel.cardNumber}
-            on:input={(e) => handleMask('cardNumber', (e.target as HTMLInputElement)?.value)}
+            on:input={(e) => handleMaskedInputChange('cardNumber', e)}
             required
             fieldAttrs={{ class: modelErrors.cardNumber ? 'error' : '' }}
         />
@@ -191,18 +235,18 @@
                 type="text"
                 label={translations.expiry_date}
                 bind:value={paymentModel.expiryDate}
-                on:input={(e) => handleMask('expiryDate', (e.target as HTMLInputElement)?.value)}
+                on:input={(e) => handleMaskedInputChange('expiryDate', e)}
                 required
                 fieldAttrs={{ class: modelErrors.expiryDate ? 'error' : '' }}
             />
 
-            {#if paymentProduct?.json?.fields.find(f => f.id === 'cvv')}
+            {#if paymentProduct?.fields.find(f => f.id === 'cvv')}
                 <Input
                     id="cvv"
                     type="text"
                     label={translations.security_code}
                     bind:value={paymentModel.cvv}
-                    on:input={(e) => handleMask('cvv', (e.target as HTMLInputElement)?.value)}
+                    on:input={(e) => handleMaskedInputChange('cvv', e)}
                     required
                     fieldAttrs={{ step: '1', class: modelErrors.cvv ? 'error' : '' }}
                 />
@@ -214,7 +258,7 @@
             type="text"
             label={translations.cardholder_name}
             bind:value={paymentModel.cardholderName}
-            on:input={(e) => handleMask('cardholderName', (e.target as HTMLInputElement)?.value)}
+            on:input={(e) => handleMaskedInputChange('cardholderName', e)}
             required
             fieldAttrs={{ class: modelErrors.cardholderName ? 'error' : '' }}
         />
@@ -235,7 +279,7 @@
     {/if}
 
     <AdditionalCardOperations
-        {session}
+        {sdk}
         cardNumber={paymentModel.cardNumber}
         cardNumberError={modelErrors.cardNumber}
         amountOfMoney={paymentContext?.amountOfMoney}

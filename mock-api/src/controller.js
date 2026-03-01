@@ -127,32 +127,22 @@ export const processPayment = (req, res) => {
     });
 };
 
-export const getTokens = (req, res) => {
-    const tokens = db.data.tokens;
+export const createToken = (req, res) => {
     const merchantId = req.params.merchantId;
-    if (!tokens?.length) {
-        return res.status(200).json([]);
-    }
+    const postData = {
+        encryptedCustomerInput: req.body.encryptedData
+    };
 
     return new Promise((resolve) => {
-        const result = [];
-        for (let i = 0; i < tokens.length; i++) {
-            const token = tokens[i];
-            sdk.tokens.getToken(merchantId, token, {}, (error, sdkResponse) => {
-                if (!error && (sdkResponse.body.card?.alias || sdkResponse.body.eWallet?.alias)) {
-                    result.push({
-                        id: token,
-                        type: sdkResponse.body.card ? 'card' : 'eWallet',
-                        label: sdkResponse.body.card?.alias || sdkResponse.body.eWallet?.alias,
-                        productId: sdkResponse.body.paymentProductId
-                    });
-                }
+        const doIt = async () => {
+            try {
+                const sdkResponse = await sdk.tokens.createToken(merchantId, postData, {});
+                resolve(res.status(sdkResponse?.status).json(sdkResponse?.body));
+            } catch (error) {
+                resolve(res.status(400).json(error));
+            }
+        };
 
-                if (i === tokens.length - 1) {
-                    resolve(res.status(200).json(result));
-                }
-            });
-        }
+        void doIt();
     });
 };
-

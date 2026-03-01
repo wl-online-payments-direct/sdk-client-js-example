@@ -1,15 +1,14 @@
 import { PaymentProduct, PaymentRequest } from 'onlinepayments-sdk-client-js';
 
 const PaymentRequestUtility = () => {
-    const get = (paymentProduct?: PaymentProduct, key?: string, value?: string) => {
+    const get = (paymentProduct?: PaymentProduct | null, key?: string, value?: string) => {
         if (!paymentProduct) {
             return null;
         }
 
-        const paymentRequest = new PaymentRequest();
-        paymentRequest.setPaymentProduct(paymentProduct);
-        if (key) {
-            paymentRequest.setValue(key, value);
+        const paymentRequest = new PaymentRequest(paymentProduct);
+        if (key && value) {
+            paymentRequest.getField(key).setValue(value);
         }
 
         return paymentRequest;

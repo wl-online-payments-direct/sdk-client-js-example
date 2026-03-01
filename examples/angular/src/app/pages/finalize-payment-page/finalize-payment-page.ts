@@ -3,14 +3,16 @@ import { ApiService } from '../../services/api-service';
 import StorageService from '@shared/services/StorageService';
 import { Router } from '@angular/router';
 import {
-  ErrorResponseJSON,
+  ErrorResponse,
+  init,
+  type OnlinePaymentSdk,
   PaymentContextWithAmount,
   PaymentProduct,
-  Session,
 } from 'onlinepayments-sdk-client-js';
 import { useMockApi } from '../../../config';
 import { LogoComponent } from '../../components/logo/logo';
 import { LoaderService } from '../../services/loader-service';
+import PaymentProductService from '@shared/services/PaymentProductService';
 
 type PaymentData = {
   type: 'encrypted' | 'raw';
@@ -27,7 +29,7 @@ export class FinalizePaymentPage {
   router = inject(Router);
   apiService: ApiService = inject(ApiService);
 
-  session: Session | null = null;
+  sdk: OnlinePaymentSdk | null = null;
   paymentProduct: PaymentProduct | null = null;
   paymentContext: PaymentContextWithAmount | null = StorageService.getPaymentContext();
 
@@ -37,9 +39,14 @@ export class FinalizePaymentPage {
 
   constructor(private loader: LoaderService) {}
 
-  ngOnInit() {
-    this.session = new Session(StorageService.getSession()!);
-    this.paymentProduct = new PaymentProduct(StorageService.getPaymentProduct()!);
+  async initData(): Promise<void> {
+    this.sdk = init(StorageService.getSessionData()!);
+
+    this.paymentProduct = await PaymentProductService.getPaymentProduct(
+      this.sdk,
+      Number(StorageService.getPaymentProductId()!),
+      StorageService.getPaymentContext()!,
+    );
 
     if (StorageService.getEncryptedData()) {
       this.paymentData.set({
@@ -52,6 +59,10 @@ export class FinalizePaymentPage {
         data: JSON.stringify(StorageService.getCardPaymentSpecificData(), null, 2),
       });
     }
+  }
+
+  ngOnInit() {
+    this.initData().catch((error) => console.log(error));
   }
 
   ngOnDestroy() {
@@ -78,11 +89,11 @@ export class FinalizePaymentPage {
       .then((response) => {
         this.paymentResponse.set(JSON.stringify(response, null, 2));
       })
-      .catch((error: ErrorResponseJSON) => {
+      .catch((error: ErrorResponse) => {
         if (error.errors?.length) {
           errorMessage =
             'Errors while submitting the data: ' +
-            error.errors.map((error) => error.message).join(', ');
+            error.errors.map((err) => err.message).join(', ');
         } else {
           errorMessage = 'There was an error fetching data. Did you start the Mock API?';
         }

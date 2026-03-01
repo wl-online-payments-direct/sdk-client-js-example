@@ -57,7 +57,7 @@ const SessionPage = () => {
     /**
      * Populates form fields with the given data object.
      *
-     * @param {sdk.SessionDetails} data - An object containing the values to set in the form.
+     * @param {sdk.SessionData} data - An object containing the values to set in the form.
      * @param {string} data.assetUrl - The value to set for the asset URL field.
      * @param {string} data.clientApiUrl - The value to set for the client API URL field.
      * @param {string} data.clientSessionId - The value to set for the client session ID field.
@@ -156,7 +156,7 @@ const SessionPage = () => {
             };
 
             try {
-                new sdk.Session(sessionDetails);
+                sdk.init(sessionDetails);
                 StorageService.clear();
                 StorageService.setSessionDetails(sessionDetails);
                 window.location.href = Pages.Payment;
@@ -176,7 +176,7 @@ const SessionPage = () => {
         customerIdField = document.getElementById('customerId');
         errorMessageElement = document.getElementById('errorMessage');
 
-        const sessionDetails = StorageService.getSessionDetails();
+        const sessionDetails = StorageService.getSessionData();
         if (sessionDetails) {
             fillForm(sessionDetails);
         }

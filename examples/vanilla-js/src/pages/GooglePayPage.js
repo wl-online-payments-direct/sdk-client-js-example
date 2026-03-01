@@ -6,6 +6,7 @@ import Loader from '../components/Loader.js';
 import Logo from '../components/Logo.js';
 import NumberFormatter from '../utilities/NumberFormatter.js';
 import EncryptionService from '../services/EncryptionService.js';
+import PaymentProductService from '@javascript-sdk-example/shared/services/PaymentProductService';
 
 /**
  * A Google Pay page.
@@ -18,8 +19,8 @@ const GooglePayPage = () => {
     /** @type sdk.PaymentProduct */
     let paymentProduct;
 
-    /** @type sdk.Session */
-    let session;
+    /** @type sdk.OnlinePaymentSdk */
+    let sdkClient;
 
     /** @type sdk.PaymentRequest */
     let paymentRequest;
@@ -80,8 +81,8 @@ const GooglePayPage = () => {
 
         paymentRequest.setValue('encryptedPaymentData', token);
 
-        if (paymentRequest.isValid()) {
-            EncryptionService.encrypt(session, paymentRequest)
+        if (paymentRequest.validate().isValid) {
+            EncryptionService.encrypt(sdkClient, paymentRequest)
                 .then(() => {
                     StorageService.setPaymentRequest(paymentRequest);
                     window.location.href = Pages.Finalize;
@@ -118,7 +119,7 @@ const GooglePayPage = () => {
                 totalPriceStatus: 'FINAL',
                 totalPrice: NumberFormatter.formatAmountForGooglePay(paymentDetails.amountOfMoney),
                 currencyCode: paymentDetails.amountOfMoney.currencyCode,
-                countryCode: paymentProduct.json.acquirerCountry || paymentDetails.countryCode
+                countryCode: paymentDetails.countryCode
             }
         });
 
@@ -138,8 +139,7 @@ const GooglePayPage = () => {
     const setupGooglePayIntegration = () => {
         const context = StorageService.getPaymentContext();
 
-        paymentRequest = new sdk.PaymentRequest();
-        paymentRequest.setPaymentProduct(paymentProduct);
+        paymentRequest = new sdk.PaymentRequest(paymentProduct);
 
         baseRequest = createBaseRequest(paymentProduct.paymentProduct320SpecificData.networks);
 
@@ -173,8 +173,17 @@ const GooglePayPage = () => {
     const init = async (mountingPoint) => {
         Loader.show();
         const context = StorageService.getPaymentContext();
-        paymentProduct = StorageService.getPaymentProduct();
-        session = StorageService.getSession();
+        sdkClient = sdk.init(StorageService.getSessionData());
+
+        paymentProduct = await PaymentProductService.getPaymentProduct(
+            sdkClient,
+            StorageService.getPaymentProductId(),
+            context
+        ).catch((error) => console.error(error));
+
+        if (!paymentProduct) {
+            window.location = Pages.Payment;
+        }
 
         mountingPoint.innerHTML = getTemplate(context);
         Loader.hide();
@@ -188,9 +197,9 @@ const GooglePayPage = () => {
      * @returns {Promise<void>}
      */
     const mount = (mountingPoint) => {
-        if (!StorageService.getSession()) {
+        if (!StorageService.getSessionData()) {
             window.location = Pages.Home;
-        } else if (!StorageService.getPaymentProduct()) {
+        } else if (!StorageService.getPaymentProductId() || !StorageService.getPaymentContext()) {
             window.location = Pages.Payment;
         } else {
             return init(mountingPoint);

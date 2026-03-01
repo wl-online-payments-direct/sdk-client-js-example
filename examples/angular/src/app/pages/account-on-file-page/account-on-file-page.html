@@ -5,9 +5,9 @@
     Total amount: {{ getFormattedAmount() }}
     {{ getCurrency() }}
   </strong></p>
-  <p class="self-start m-0">Selected card type: {{ paymentProduct?.json?.displayHints?.label }}</p>
+  <p class="self-start m-0">Selected card type: {{ paymentProduct?.label }}</p>
   <a routerLink="/payment" class="button link self-start">← Back to payment method selection</a>
-  <form [formGroup]="form" class="form" (ngSubmit)="handleProcessPayment()" #accountOnFileFormRef>
+  <form [formGroup]="form" class="form form-max-height" [class.invisible]="isLoading" (ngSubmit)="handleProcessPayment()" #accountOnFileFormRef>
     <wl-input formControlName="cardNumber" [defaultValue]="getCardNumber()" classes="field" id="card-number"
               label="Card number"
               required

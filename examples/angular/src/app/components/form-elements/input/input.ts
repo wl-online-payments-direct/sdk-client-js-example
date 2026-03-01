@@ -51,7 +51,12 @@ export class FormInput implements ControlValueAccessor {
 
   private getInputMask(value: string): string {
     const request = PaymentRequestUtility.get(this.maskProduct!, this.maskField!, value);
-    return request?.getMaskedValue?.(this.maskField!) ?? value;
+
+    if (this.maskField) {
+      return request?.getField(this.maskField).getMaskedValue() ?? value;
+    }
+
+    return value;
   }
 
   handleInput(e: Event) {

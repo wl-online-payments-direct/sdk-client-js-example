@@ -5,8 +5,9 @@ import StorageService from '@shared/services/StorageService';
 export const productGuard: CanActivateFn = () => {
   const router = inject(Router);
 
-  const product = StorageService.getPaymentProduct();
-  if (!product) {
+  const productId = StorageService.getPaymentProductId();
+
+  if (!productId) {
     return router.createUrlTree(['/payment']);
   }
 

@@ -89,7 +89,7 @@
         <Checkbox
             id="isRecurring"
             label={translations.is_recurring_payment}
-            bind:checked={paymentContext!.isRecurring}
+            bind:checked={paymentContext!.isRecurring!}
         />
 
         <button class="button primary" type="submit">

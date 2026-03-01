@@ -1,16 +1,27 @@
 import {
+  init,
+  OnlinePaymentSdk,
   PaymentContextWithAmount,
   PaymentProduct,
-  PaymentProductJSON,
   PaymentRequest,
-  Session,
 } from 'onlinepayments-sdk-client-js';
-import { Component, computed, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import StorageService from '@shared/services/StorageService';
 import NumberFormatter from '@shared/utilities/NumberFormatter';
 import { LogoComponent } from '../../components/logo/logo';
 import { Router, RouterLink } from '@angular/router';
 import EncryptionService from '@shared/services/EncryptionService';
+import PaymentProductService from '@shared/services/PaymentProductService';
+import { LoaderService } from '../../services/loader-service';
 
 declare const google: any;
 
@@ -31,22 +42,38 @@ export class GooglePayPage implements OnInit {
 
   @ViewChild('googlePayContainer') container!: ElementRef<HTMLElement>;
 
-  session: Session | null = null;
+  sdk: OnlinePaymentSdk | null = null;
   paymentProduct: PaymentProduct | null = null;
+
   paymentContext: PaymentContextWithAmount | null = StorageService.getPaymentContext();
 
   errorMessage = signal('');
+  isLoading: boolean = true;
 
   private paymentsClient!: any;
   private readonly ENVIRONMENT = 'TEST';
   private readonly baseRequest = { apiVersion: 2, apiVersionMinor: 0 };
   private readonly baseAllowedAuthMethods = ['PAN_ONLY', 'CRYPTOGRAM_3DS'];
 
-  ngOnInit() {
-    this.paymentProduct = new PaymentProduct(
-      StorageService.getPaymentProduct() as PaymentProductJSON,
+  constructor(
+    private loader: LoaderService,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  async initData(): Promise<void> {
+    this.loader.show();
+
+    this.sdk = init(StorageService.getSessionData()!);
+
+    this.paymentProduct = await PaymentProductService.getPaymentProduct(
+      this.sdk,
+      Number(StorageService.getPaymentProductId()!),
+      StorageService.getPaymentContext()!,
     );
-    this.session = new Session(StorageService.getSession()!);
+
+    if (!this.paymentProduct) {
+      void this.router.navigate(['/payment']);
+    }
 
     if (!window.google?.payments?.api) {
       this.errorMessage.set('Error loading Google Pay.');
@@ -57,7 +84,16 @@ export class GooglePayPage implements OnInit {
       environment: this.ENVIRONMENT,
     });
 
+    this.isLoading = false;
+    this.cdr.detectChanges();
+
     void this.isGooglePayButtonReady();
+
+    this.loader.hide();
+  }
+
+  ngOnInit() {
+    this.initData().catch((error) => console.error(error));
   }
 
   private async isGooglePayButtonReady() {
@@ -150,13 +186,12 @@ export class GooglePayPage implements OnInit {
         return;
       }
 
-      const paymentRequest = new PaymentRequest();
-      paymentRequest.setPaymentProduct(this.paymentProduct as PaymentProduct);
+      const paymentRequest = new PaymentRequest(this.paymentProduct as PaymentProduct);
 
       paymentRequest.setValue('encryptedPaymentData', token);
 
-      if (paymentRequest.isValid() && !!this.session) {
-        EncryptionService.encrypt(this.session as Session, paymentRequest)
+      if (paymentRequest.validate().isValid && !!this.sdk) {
+        EncryptionService.encrypt(this.sdk as OnlinePaymentSdk, paymentRequest)
           .then(() => {
             StorageService.setPaymentRequest(paymentRequest);
             void this.router.navigate(['/payment/finalize']);

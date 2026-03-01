@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, shallowRef } from 'vue';
 import {
-    type ErrorResponseJSON,
+    init,
+    type OnlinePaymentSdk,
     type PaymentContextWithAmount,
     PaymentProduct,
-    Session
+    type SdkError
 } from 'onlinepayments-sdk-client-js';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import RouterService from '../../services/RouterService.ts';
 import LoaderService from '../../services/LoaderService.ts';
 import StorageService from '@shared/services/StorageService';
@@ -18,6 +19,7 @@ import Checkbox from '../../components/FormFields/Checkbox/Checkbox.vue';
 import Logo from '../../components/Logo/Logo.vue';
 import translations from '../../translations/translations.ts';
 import AdditionalCardOperations from '../../components/AdditionalCardPaymentOperations/AdditionalCardPaymentOperations.vue';
+import PaymentProductService from '@shared/services/PaymentProductService.ts';
 
 const router = useRouter();
 const { redirectToPage } = RouterService(router);
@@ -38,50 +40,72 @@ const CardPaymentModelInitialState = {
 
 const creditCardPaymentModel = reactive({ ...CardPaymentModelInitialState });
 
-const session = shallowRef<Session>();
+const sdk = shallowRef<OnlinePaymentSdk>();
 const paymentContext = shallowRef<PaymentContextWithAmount>();
-const paymentProduct = shallowRef<PaymentProduct>();
+const paymentProduct = ref<PaymentProduct | null>();
 
 const isPaymentRecurring = ref(false);
 const errorMessage = ref('');
 
-onMounted(() => {
+const isLoading = ref(true);
+
+const initData = async () => {
     LoaderService.show();
-    const sessionDetails = StorageService.getSession();
+    const sessionDetails = StorageService.getSessionData();
     const context = StorageService.getPaymentContext();
-    const paymentProductJSON = StorageService.getPaymentProduct();
+    const productId = StorageService.getPaymentProductId();
 
     if (sessionDetails) {
-        session.value = new Session(sessionDetails);
+        sdk.value = init(sessionDetails);
     }
 
     if (context) {
         paymentContext.value = context;
     }
 
-    if (paymentProductJSON) {
-        paymentProduct.value = new PaymentProduct(paymentProductJSON);
+    if (productId) {
+        paymentProduct.value = await PaymentProductService.getPaymentProduct(
+            sdk.value!,
+            productId,
+            paymentContext.value!
+        );
+    } else {
+        redirectToPage('/payment');
     }
 
+    isLoading.value = false;
     LoaderService.hide();
+};
+
+onMounted(() => {
+    initData().catch((error) => console.log(error));
 });
 
 const getIinDetails = (cardNumber: string) => {
-    return session.value?.getIinDetails(cardNumber.replace(/\s+/g, '').trim(), paymentContext.value).catch(() => null);
+    return sdk.value?.getIinDetails(cardNumber.replace(/\s+/g, '').trim(), paymentContext.value!).catch(() => null);
 };
 
+const dirtyFields = reactive({
+    cardNumber: false,
+    cvv: false,
+    cardholderName: false,
+    expiryDate: false
+});
+
 const errors = computed(() => ({
-    cardNumber: handleValidateField('cardNumber', creditCardPaymentModel.cardNumber),
-    cvv: handleValidateField('cvv', creditCardPaymentModel.cvv),
-    cardholderName: handleValidateField('cardholderName', creditCardPaymentModel.cardholderName),
-    expiryDate: handleValidateField('expiryDate', creditCardPaymentModel.expiryDate)
+    cardNumber: dirtyFields.cardNumber ? handleValidateField('cardNumber', creditCardPaymentModel.cardNumber) : false,
+    cvv: dirtyFields.cvv ? handleValidateField('cvv', creditCardPaymentModel.cvv) : false,
+    cardholderName: dirtyFields.cardholderName
+        ? handleValidateField('cardholderName', creditCardPaymentModel.cardholderName)
+        : false,
+    expiryDate: dirtyFields.expiryDate ? handleValidateField('expiryDate', creditCardPaymentModel.expiryDate) : false
 }));
 
 const handleValidateField = (key: string, value: string) => {
     const paymentRequest = PaymentRequestUtility.get(paymentProduct.value, key, value);
     let hasError = false;
 
-    if (paymentRequest?.getErrorMessageIds().length) {
+    if (!paymentRequest?.getField(key).validate().isValid) {
         hasError = true;
     } else {
         hasError = false;
@@ -99,7 +123,9 @@ const handleValidateField = (key: string, value: string) => {
 
 const handleMask = <K extends keyof CardPaymentModel>(key: K, value?: string) => {
     const request = PaymentRequestUtility.get(paymentProduct.value, String(key), value);
-    const masked = request?.getMaskedValue(key) ?? value ?? '';
+    const masked = request?.getField(key).getMaskedValue() ?? value ?? '';
+
+    dirtyFields[key] = true;
 
     creditCardPaymentModel[key] = masked as CardPaymentModel[K];
 };
@@ -114,21 +140,19 @@ const handleSubmit = () => {
         }
     });
 
-    if (paymentRequest?.isValid()) {
+    if (paymentRequest?.validate().isValid) {
         getIinDetails?.(creditCardPaymentModel['cardNumber'])
             ?.then((details) => {
                 if (details?.paymentProductId !== paymentProduct?.value?.id) {
-                    throw Error(
-                        `${translations.entered_card_is_not_for} ${paymentProduct?.value?.json.displayHints.label}.`
-                    );
+                    throw Error(`${translations.entered_card_is_not_for} ${paymentProduct?.value?.label}.`);
                 }
-                EncryptionService.encrypt(session.value as Session, paymentRequest)
+                EncryptionService.encrypt(sdk.value as OnlinePaymentSdk, paymentRequest)
                     .then(() => {
                         StorageService.setPaymentRequest(paymentRequest);
                         redirectToPage('/payment/finalize');
                     })
-                    .catch((errors: ErrorResponseJSON) => {
-                        errorMessage.value = 'Errors: ' + JSON.stringify(errors);
+                    .catch((errors: SdkError) => {
+                        errorMessage.value = 'Errors: ' + JSON.stringify(errors.metadata);
                     });
             })
             .catch((error: Error) => {
@@ -157,13 +181,11 @@ const handleSubmit = () => {
                 {{ paymentContext?.amountOfMoney.currencyCode }}</strong
             >
         </p>
-        <p class="self-start m-0">
-            {{ translations.selected_card_type }} {{ paymentProduct?.json?.displayHints?.label }}
-        </p>
+        <p class="self-start m-0">{{ translations.selected_card_type }} {{ paymentProduct?.label }}</p>
         <RouterLink to="/payment" class="button link self-start">
             {{ translations.back_to_payment_method_selection }}
         </RouterLink>
-        <form class="form" id="paymentDetailsForm" @submit.prevent="handleSubmit">
+        <form :class="{ form: true, 'form-max-height': true, invisible: isLoading }" @submit.prevent="handleSubmit">
             <Input
                 id="card-number"
                 :label="translations.card_number"
@@ -182,7 +204,7 @@ const handleSubmit = () => {
                     :fieldAttrs="{ className: errors.expiryDate ? 'error' : '' }"
                 />
                 <Input
-                    v-if="paymentProduct?.json?.fields.find((field) => field.id === 'cvv')"
+                    v-if="paymentProduct?.fields.find((field) => field.id === 'cvv')"
                     id="cvv"
                     :label="translations.security_code"
                     required
@@ -213,7 +235,7 @@ const handleSubmit = () => {
         </div>
         <AdditionalCardOperations
             v-if="paymentContext?.amountOfMoney"
-            :session="session"
+            :sdk="sdk"
             :card-number="creditCardPaymentModel.cardNumber"
             :card-number-error="errors.cardNumber"
             :amount-of-money="paymentContext?.amountOfMoney"

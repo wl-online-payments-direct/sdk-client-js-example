@@ -6,9 +6,11 @@
       Total amount: {{ getFormattedAmount() }}
       {{ getCurrency() }}
     </strong></p>
-    <p class="self-start m-0">Selected card type: {{ paymentProduct?.json?.displayHints?.label }}</p>
-    <a routerLink="/payment" class="button link self-start">← Back to payment method selection</a>
-    <form [formGroup]="creditCardPayment" class="form" (ngSubmit)="handleProcessPayment()" #creditCardFormRef>
+
+    <p class="self-start m-0">
+      Selected card type: @if (cardLabel) { {{ cardLabel }} }
+    </p>    <a routerLink="/payment" class="button link self-start">← Back to payment method selection</a>
+    <form [formGroup]="creditCardPayment" class="form form-max-height" [class.invisible]="isLoading" (ngSubmit)="handleProcessPayment()" #creditCardFormRef>
       <wl-input formControlName="cardNumber" classes="field" id="card-number" label="Card number" required
                 [classes]="((creditCardPayment.get('cardNumber')?.touched && creditCardPayment.get('cardNumber')?.invalid && creditCardPayment.get('cardNumber')?.dirty) ? 'error ' : '')"
                 [maskProduct]="paymentProduct"
@@ -24,7 +26,7 @@
                   maskField="expiryDate">
           >
         </wl-input>
-        @if (hasField('cvv')) {
+        @if (hasCvvField) {
           <wl-input formControlName="cvv" label="Security code"
                     id="cvv" type="number"
                     required
@@ -58,7 +60,7 @@
     @let amountOfMoney = paymentContext?.amountOfMoney;
     @if (amountOfMoney?.amount) {
       <additional-card-operations [amountOfMoney]="getAmountOfMoney()"
-                                  [session]="session"
+                                  [sdk]="sdk"
                                   [cardNumberError]="hasCardNumberError()"
                                   [paymentProductId]="paymentProduct?.id"
                                   [cardNumber]="getCardNumber()">

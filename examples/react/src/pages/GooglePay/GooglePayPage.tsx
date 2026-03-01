@@ -3,51 +3,79 @@ import { useLoader } from '../../components/Loader/Loader.tsx';
 import { Link, useNavigate } from 'react-router-dom';
 import GooglePayButton from '@google-pay/button-react';
 import StorageService from '@shared/services/StorageService';
-import { type PaymentContextWithAmount, PaymentProduct, PaymentRequest, Session } from 'onlinepayments-sdk-client-js';
+import {
+    init,
+    type OnlinePaymentSdk,
+    type PaymentContextWithAmount,
+    PaymentProduct,
+    PaymentRequest,
+    type SessionData
+} from 'onlinepayments-sdk-client-js';
 import NumberFormatter from '@shared/utilities/NumberFormatter';
 import EncryptionService from '@shared/services/EncryptionService';
 import translations from '../../translations/translations.ts';
 import Logo from '../../components/Logo/Logo.tsx';
+import PaymentProductService from '@shared/services/PaymentProductService.ts';
 
 const GooglePayPage = () => {
     const { show, hide } = useLoader();
+    const sdk = useRef<OnlinePaymentSdk>(null);
     const navigate = useNavigate();
-
-    const session = useRef<Session>(null);
 
     const [paymentContext, setPaymentContext] = useState<PaymentContextWithAmount>();
     const [paymentProduct, setPaymentProduct] = useState<PaymentProduct>();
 
     const [errorMessage, setErrorMessage] = useState('');
 
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
-        show();
-        if (!StorageService.getSession()) {
+        const initData = async () => {
+            show();
+
+            const sessionData = StorageService.getSessionData();
+            const context = StorageService.getPaymentContext();
+
+            if (!sessionData || !context) {
+                hide();
+                navigate('/');
+                return;
+            }
+
+            setPaymentContext(context);
+            sdk.current = init(sessionData as SessionData);
+
+            const paymentProductId = StorageService.getPaymentProductId();
+
+            if (paymentProductId) {
+                const product = await PaymentProductService.getPaymentProduct(
+                    sdk.current,
+                    Number(paymentProductId),
+                    context
+                );
+
+                if (product) {
+                    setPaymentProduct(product);
+                    setIsLoading(false);
+                    hide();
+
+                    return;
+                }
+
+                setErrorMessage(translations.payment_product_not_found);
+            }
+
             hide();
-            navigate('/');
-        }
+            setIsLoading(false);
+            navigate('/payment');
+        };
 
-        if (!StorageService.getPaymentProduct()) {
-            hide();
-            navigate(`/payment/`);
-        }
-
-        if (StorageService.getPaymentContext()) {
-            setPaymentContext(StorageService.getPaymentContext()!);
-        }
-
-        const product = new PaymentProduct(StorageService.getPaymentProduct()!);
-        setPaymentProduct({ ...product } as PaymentProduct);
-
-        session.current = new Session(StorageService.getSession()!);
-
-        hide();
+        initData().catch((error) => console.error(error));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const googlePaymentRequest = useMemo(() => {
         if (!paymentProduct) {
-            setErrorMessage(translations.payment_product_not_found);
             return null;
         }
 
@@ -99,13 +127,12 @@ const GooglePayPage = () => {
             return;
         }
 
-        const paymentRequest = new PaymentRequest();
-        paymentRequest.setPaymentProduct(paymentProduct as PaymentProduct);
+        const paymentRequest = new PaymentRequest(paymentProduct!);
 
         paymentRequest.setValue('encryptedPaymentData', token);
 
-        if (paymentRequest.isValid() && session.current) {
-            EncryptionService.encrypt(session.current, paymentRequest)
+        if (paymentRequest.validate().isValid && sdk.current) {
+            EncryptionService.encrypt(sdk.current, paymentRequest)
                 .then(() => {
                     StorageService.setPaymentRequest(paymentRequest);
                     navigate('/payment/finalize');
@@ -136,8 +163,8 @@ const GooglePayPage = () => {
             <Link to='/payment/' className='button link self-start'>
                 {translations.back_to_payment_method_selection}
             </Link>
-            <div className='form flex column center m-0'>
-                {googlePaymentRequest ? (
+            <div className={`form flex column center m-0 form-max-height ${isLoading ? 'invisible' : ''}`}>
+                {googlePaymentRequest && paymentProduct ? (
                     <GooglePayButton
                         environment='TEST'
                         buttonColor='default'
@@ -154,7 +181,7 @@ const GooglePayPage = () => {
                         paymentRequest={googlePaymentRequest}
                     />
                 ) : (
-                    <div className='error'>{translations.google_pay_not_ready}</div>
+                    !isLoading && <div className='error'>{translations.google_pay_not_ready}</div>
                 )}
             </div>
             <div id='error' className='error'>

@@ -8,6 +8,7 @@ import FormField from '../components/FormField.js';
 import Loader from '../components/Loader.js';
 import NumberFormatter from '../utilities/NumberFormatter.js';
 import PaymentRequestUtility from '../utilities/PaymentRequestUtility.js';
+import PaymentProductService from '@javascript-sdk-example/shared/services/PaymentProductService';
 
 /**
  * The "account on file" page.
@@ -23,8 +24,8 @@ const AccountOnFilePage = () => {
     /** @type HTMLFormElement */
     let form;
 
-    /** @type sdk.Session */
-    let session;
+    /** @type sdk.OnlinePaymentSdk */
+    let sdkClient;
 
     let accountOnFile;
 
@@ -49,15 +50,15 @@ const AccountOnFilePage = () => {
                 ${Logo.render()}
                 <h1 class="m-0">Pay with a credit card</h1>
                 <p class="self-start m-0"><strong>Total amount: ${NumberFormatter.formatAmount(paymentDetails.amountOfMoney)} ${paymentDetails.amountOfMoney.currencyCode}</strong></p>
-                <p class="self-start m-0">Selected card type: ${paymentProduct.json.displayHints.label}</p>
+                <p class="self-start m-0">Selected card type: ${paymentProduct?.label}</p>
                 <a href="${Pages.Payment}" class="button link self-start">← Back to payment method selection</a>
                 <form class="form" id="creditCardForm">
-                    ${FormField.getInputField('Card number', 'cardNumber', 'text', true, {}, accountOnFile.getLabel()?.formattedValue ?? '', true)}
+                    ${FormField.getInputField('Card number', 'cardNumber', 'text', true, {}, accountOnFile.label ?? '', true)}
                     <div class="flex row">
-                        ${FormField.getInputField('Expiry date', 'expiryDate', 'text', true, {}, paymentRequest ? paymentRequest.getMaskedValue('expiryDate') : '', true)}
-                        ${paymentProduct.json.fields.find((f) => f.id === 'cvv') ? FormField.getInputField('Security code', 'cvv', 'number', true, { step: 1 }) : ''}
+                        ${FormField.getInputField('Expiry date', 'expiryDate', 'text', true, {}, paymentRequest ? paymentRequest.getField('expiryDate').getMaskedValue() : '', true)}
+                        ${paymentProduct?.fields.find((f) => f.id === 'cvv') ? FormField.getInputField('Security code', 'cvv', 'number', true, { step: 1 }) : ''}
                     </div>
-                    ${FormField.getInputField('Cardholder name', 'cardholderName', 'text', true, {}, accountOnFile.attributeByKey['cardholderName'].value, true)}
+                    ${FormField.getInputField('Cardholder name', 'cardholderName', 'text', true, {}, accountOnFile.getValue('cardholderName'), true)}
                     <div id="networks"></div>
                     <button class="button primary" type="submit">Pay now</button>
                 </form>
@@ -75,13 +76,13 @@ const AccountOnFilePage = () => {
         // add formatting cvv on input
         form.elements[key]?.addEventListener('input', (e) => {
             const paymentRequest = PaymentRequestUtility.get(paymentProduct, key, e.target.value);
-            e.target.value = paymentRequest.getMaskedValue(key);
+            e.target.value = paymentRequest.getField(key).getMaskedValue();
         });
 
         // add cvv validation on change
         form.elements[key]?.addEventListener('change', (e) => {
             const paymentRequest = PaymentRequestUtility.get(paymentProduct, key, e.target.value);
-            if (paymentRequest.getErrorMessageIds().length) {
+            if (!paymentRequest.getField(key).validate().isValid) {
                 e.target.classList.add('error');
             } else {
                 e.target.classList.remove('error');
@@ -102,7 +103,7 @@ const AccountOnFilePage = () => {
         const paymentRequest = PaymentRequestUtility.get(paymentProduct, 'cvv', form.elements['cvv']?.value ?? '');
         paymentRequest.setAccountOnFile(accountOnFile);
 
-        if (paymentRequest.isValid()) {
+        if (paymentRequest.validate().isValid) {
             StorageService.setPaymentRequest(paymentRequest);
             StorageService.setCardPaymentSpecificData({
                 token: accountOnFile.id,
@@ -122,11 +123,21 @@ const AccountOnFilePage = () => {
      */
     const init = async (mountingPoint) => {
         Loader.show();
-        const context = StorageService.getPaymentContext();
-        paymentProduct = StorageService.getPaymentProduct();
-        session = StorageService.getSession();
 
-        accountOnFile = paymentProduct.accountOnFileById[StorageService.getAccountOnFileId()];
+        sdkClient = sdk.init(StorageService.getSessionData());
+        const context = StorageService.getPaymentContext();
+
+        paymentProduct = await PaymentProductService.getPaymentProduct(
+            sdkClient,
+            StorageService.getPaymentProductId(),
+            context
+        ).catch((error) => console.error(error));
+
+        if (!paymentProduct) {
+            window.location = Pages.Payment;
+        }
+
+        accountOnFile = paymentProduct.accountsOnFile.find((aof) => aof.id === StorageService.getAccountOnFileId());
 
         mountingPoint.innerHTML = getTemplate(context);
         form = document.getElementById('creditCardForm');
@@ -143,9 +154,9 @@ const AccountOnFilePage = () => {
      * @returns {Promise<void>}
      */
     const mount = (mountingPoint) => {
-        if (!StorageService.getSession()) {
+        if (!StorageService.getSessionData() || !StorageService.getPaymentContext()) {
             window.location = Pages.Home;
-        } else if (!StorageService.getPaymentProduct() || !StorageService.getAccountOnFileId()) {
+        } else if (!StorageService.getPaymentProductId() || !StorageService.getAccountOnFileId()) {
             window.location = Pages.Payment;
         } else {
             return init(mountingPoint);

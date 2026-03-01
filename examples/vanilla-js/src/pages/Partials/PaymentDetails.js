@@ -72,7 +72,7 @@ const PaymentDetails = (onSetPaymentDetailsCallback) => {
      * Initializes the form and event handlers.
      */
     const init = () => {
-        if (!StorageService.getSession()) {
+        if (!StorageService.getSessionData()) {
             window.location = Pages.Home;
             return;
         }

@@ -1,11 +1,14 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-    type ErrorResponseJSON,
+    init,
+    type OnlinePaymentSdk,
     type PaymentContextWithAmount,
     PaymentProduct,
-    Session
+    type SdkError,
+    type SessionData
 } from 'onlinepayments-sdk-client-js';
+
 import { useLoader } from '../../components/Loader/Loader.tsx';
 import StorageService from '@shared/services/StorageService';
 import NumberFormatter from '@shared/utilities/NumberFormatter';
@@ -14,8 +17,9 @@ import Input from '../../components/FormFields/Input/Input.tsx';
 import translations from '../../translations/translations.ts';
 import Checkbox from '../../components/FormFields/Checkbox/Checkbox.tsx';
 import PaymentRequestUtility from '@shared/utilities/PaymentRequestUtility';
-import EncryptionService from '@shared/services/EncryptionService';
 import AdditionalCardOperations from '../../components/AdditionalCardOperations/AdditionalCardOperations.tsx';
+import PaymentProductService from '@shared/services/PaymentProductService.ts';
+import EncryptionService from '@shared/services/EncryptionService.ts';
 
 type ModelErrors<T> = {
     [K in keyof T]: boolean;
@@ -48,7 +52,7 @@ const CreditCardPage = () => {
     const navigate = useNavigate();
     const { show, hide } = useLoader();
 
-    const session = useRef<Session>(null);
+    const sdk = useRef<OnlinePaymentSdk>(null);
 
     const [paymentContext, setPaymentContext] = useState<PaymentContextWithAmount>();
     const [paymentProduct, setPaymentProduct] = useState<PaymentProduct>();
@@ -58,47 +62,67 @@ const CreditCardPage = () => {
 
     const [modelErrorMessage, setModelErrorMessage] = useState('');
 
-    const [isRecurring, setIsRecurring] = useState<boolean>(false);
+    const [isRecurring, setIsRecurring] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        show();
-        const sessionDetails = StorageService.getSession();
-        if (!sessionDetails) {
+        const initData = async () => {
+            show();
+
+            const sessionData = StorageService.getSessionData();
+            const context = StorageService.getPaymentContext();
+
+            if (!sessionData || !context) {
+                hide();
+                navigate('/');
+                return;
+            }
+
+            setPaymentContext(context);
+            sdk.current = init(sessionData as SessionData);
+
+            const paymentProductId = StorageService.getPaymentProductId();
+
+            if (paymentProductId) {
+                const product = await PaymentProductService.getPaymentProduct(
+                    sdk.current,
+                    Number(paymentProductId),
+                    context
+                );
+
+                if (product) {
+                    setPaymentProduct(product);
+                    return;
+                }
+            }
+
             hide();
-            navigate('/');
-            return;
-        }
+            navigate('/payment');
+        };
 
-        if (!StorageService.getPaymentProduct()) {
-            hide();
-            navigate(`/payment/`);
-            return;
-        }
-
-        session.current = new Session(sessionDetails!);
-
-        const product = new PaymentProduct(StorageService.getPaymentProduct()!);
-        setPaymentProduct({ ...product } as PaymentProduct);
-
-        if (StorageService.getPaymentContext()) {
-            setPaymentContext(StorageService.getPaymentContext()!);
-        }
-
-        hide();
+        initData().catch((error) => console.error(error));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const getIinDetails = (cardNumber: string) => {
-        return session.current?.getIinDetails(cardNumber.replaceAll(' ', '').trim(), paymentContext).catch(() => null);
+    useEffect(() => {
+        if (paymentProduct) {
+            setIsLoading(false);
+            hide();
+        }
+    }, [hide, paymentProduct]);
+
+    const getIinDetails = async (cardNumber: string) => {
+        return await sdk.current?.getIinDetails(cardNumber.replace(/\s+/g, '').trim(), paymentContext!);
     };
 
     const handleChangePaymentModel = <K extends keyof PaymentModel>(prop: K, value: PaymentModel[K]) => {
         const paymentRequest = PaymentRequestUtility.get(paymentProduct, prop, value);
 
-        const maskedValue = paymentRequest?.getMaskedValue(prop);
+        const maskedValue = paymentRequest?.getField(prop).getMaskedValue();
         let hasError = false;
 
-        if (paymentRequest?.getErrorMessageIds().length) {
+        if (!paymentRequest?.getField(prop).validate().isValid) {
             hasError = true;
         } else {
             hasError = false;
@@ -134,24 +158,23 @@ const CreditCardPage = () => {
             }
         });
 
-        if (paymentRequest?.isValid()) {
+        if (paymentRequest?.validate().isValid) {
             getIinDetails?.(paymentModel['cardNumber'])
                 ?.then((details) => {
                     if (details?.paymentProductId !== paymentProduct?.id) {
-                        throw Error(
-                            `${translations.entered_card_is_not_for} ${paymentProduct?.json.displayHints.label}`
-                        );
+                        throw Error(`${translations.entered_card_is_not_for} ${paymentProduct?.label}`);
                     }
-                    EncryptionService.encrypt(session.current as Session, paymentRequest)
+
+                    EncryptionService.encrypt(sdk.current as OnlinePaymentSdk, paymentRequest)
                         .then(() => {
                             StorageService.setPaymentRequest(paymentRequest);
                             navigate('/payment/finalize');
                         })
-                        .catch((errors: ErrorResponseJSON) => {
-                            setModelErrorMessage('Errors: ' + JSON.stringify(errors));
+                        .catch((error: SdkError) => {
+                            setModelErrorMessage(error.message + ' ' + JSON.stringify(error.metadata));
                         });
                 })
-                .catch((error: Error) => {
+                .catch((error: SdkError) => {
                     setModelErrors((prev) => ({
                         ...prev,
                         cardNumber: true
@@ -179,13 +202,14 @@ const CreditCardPage = () => {
                     {paymentContext?.amountOfMoney?.currencyCode}
                 </strong>
             </p>
+
             <p className='self-start m-0'>
-                {translations.selected_card_type} {paymentProduct?.json?.displayHints?.label}
+                {translations.selected_card_type} {paymentProduct?.label}
             </p>
             <Link to='/payment' className='button link self-start'>
                 {translations.back_to_payment_method_selection}
             </Link>
-            <form className='form' id='creditCardForm' onSubmit={handleProcessPayment}>
+            <form className={`form form-max-height ${isLoading ? 'invisible' : ''}`} onSubmit={handleProcessPayment}>
                 <Input
                     id='cardNumber'
                     type='text'
@@ -205,7 +229,7 @@ const CreditCardPage = () => {
                         required={true}
                         fieldAttrs={{ className: modelErrors['expiryDate'] ? 'error' : '' }}
                     />
-                    {paymentProduct?.json?.fields.find((field) => field.id === 'cvv') && (
+                    {paymentProduct?.fields.find((field) => field.id === 'cvv') && (
                         <Input
                             id='cvv'
                             value={paymentModel.cvv}
@@ -243,7 +267,7 @@ const CreditCardPage = () => {
             </div>
             {paymentContext?.amountOfMoney && (
                 <AdditionalCardOperations
-                    session={session.current}
+                    sdk={sdk.current}
                     cardNumber={paymentModel.cardNumber}
                     cardNumberError={modelErrors['cardNumber']}
                     amountOfMoney={paymentContext.amountOfMoney}

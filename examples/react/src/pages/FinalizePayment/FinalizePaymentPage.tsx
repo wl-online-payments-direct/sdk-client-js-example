@@ -1,7 +1,12 @@
 import Logo from '../../components/Logo/Logo.tsx';
 import { mockApiUrl, useMockApi } from '../../config.ts';
 import { useEffect, useRef, useState } from 'react';
-import { type ErrorResponseJSON, type PaymentContextWithAmount, Session } from 'onlinepayments-sdk-client-js';
+import {
+    type ErrorResponse,
+    init,
+    OnlinePaymentSdk,
+    type PaymentContextWithAmount
+} from 'onlinepayments-sdk-client-js';
 import StorageService from '@shared/services/StorageService';
 import { useLoader } from '../../components/Loader/Loader.tsx';
 import { useNavigate } from 'react-router-dom';
@@ -16,7 +21,7 @@ type PaymentData = {
 };
 
 const FinalizePaymentPage = () => {
-    const session = useRef<Session>(null);
+    const sdk = useRef<OnlinePaymentSdk>(null);
 
     const { show, hide } = useLoader();
     const navigate = useNavigate();
@@ -32,22 +37,23 @@ const FinalizePaymentPage = () => {
 
     useEffect(() => {
         show();
-        if (!StorageService.getSession()) {
+        const sessionData = StorageService.getSessionData();
+        if (!sessionData) {
             hide();
             navigate('/');
         } else {
-            session.current = new Session(StorageService.getSession()!);
+            sdk.current = init(sessionData);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         if (
-            !StorageService.getPaymentProduct() ||
+            !StorageService.getPaymentProductId() ||
             (!StorageService.getEncryptedData() && !StorageService.getCardPaymentSpecificData())
         ) {
             hide();
-            navigate(`/payment/`);
+            navigate(`/payment`);
             return;
         }
 
@@ -88,10 +94,10 @@ const FinalizePaymentPage = () => {
             .then((response) => {
                 setPaymentResponse(JSON.stringify(response, null, 2));
             })
-            .catch((error: ErrorResponseJSON) => {
+            .catch((error: ErrorResponse) => {
                 if (error.errors?.length) {
                     errorMessage =
-                        translations.errors_while_fetching_data + error.errors.map((error) => error.message).join(', ');
+                        translations.errors_while_fetching_data + error.errors.map((err) => err.message).join(', ');
                 } else {
                     errorMessage = translations.there_was_an_error_fetching_data_did_you_mock_api;
                 }

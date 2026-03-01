@@ -2,13 +2,13 @@ import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import StorageService from '@shared/services/StorageService';
 
-export const sessionGuard: CanActivateFn = () => {
+export const contextGuard: CanActivateFn = () => {
   const router = inject(Router);
 
-  const session = StorageService.getSessionData();
+  const context = StorageService.getPaymentContext();
 
-  if (!session) {
-    return router.createUrlTree(['/']);
+  if (!context) {
+    return router.createUrlTree(['/payment']);
   }
 
   return true;

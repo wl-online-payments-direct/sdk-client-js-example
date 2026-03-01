@@ -31,7 +31,7 @@
         data-enable-grammarly='false'
         data-gramm='false'
         spellCheck='false'
-        [defaultValue]="paymentData()?.data"></textarea>
+        [defaultValue]="paymentData()?.data ?? ''"></textarea>
     </ng-container>
     @if (useMockApi) {
       <button class='button primary' type='button' (click)="processPayment()">

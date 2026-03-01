@@ -1,4 +1,4 @@
-import { ErrorResponseJSON, SessionDetails } from 'onlinepayments-sdk-client-js';
+import { ErrorResponse, SessionData } from 'onlinepayments-sdk-client-js';
 import { mockApiUrl } from '../../config';
 import { Injectable } from '@angular/core';
 import type { CreatePaymentRequest } from '@shared/types/CreatePaymentRequest';
@@ -11,7 +11,7 @@ export class ApiService {
 
   async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      throw (await response.json()) as ErrorResponseJSON;
+      throw (await response.json()) as ErrorResponse;
     }
 
     return (await response.json()) as T;
@@ -32,6 +32,6 @@ export class ApiService {
       method: 'GET',
       headers: this.headers,
     });
-    return this.handleResponse<SessionDetails>(response);
+    return this.handleResponse<SessionData>(response);
   }
 }

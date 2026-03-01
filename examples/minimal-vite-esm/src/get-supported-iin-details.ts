@@ -1,12 +1,12 @@
-import { IinDetailsStatus, PaymentContextWithAmount, Session } from 'onlinepayments-sdk-client-js';
+import { IinDetailStatus, PaymentContextWithAmount, OnlinePaymentSdk } from 'onlinepayments-sdk-client-js';
 
-const errorMessage = new Map<IinDetailsStatus, string>([
-    ['UNKNOWN', 'Unknown error'],
-    ['NOT_ENOUGH_DIGITS', 'Card number does not contains enough digits']
+const errorMessage = new Map([
+    [IinDetailStatus.UNKNOWN, 'Unknown error'],
+    [IinDetailStatus.NOT_ENOUGH_DIGITS, 'Card number does not contains enough digits']
 ]);
 
-const getIinDetails = async (session: Session, cardNumber: string, paymentContext: PaymentContextWithAmount) => {
-    const iinDetailsResponse = await session.getIinDetails(cardNumber, paymentContext);
+const getIinDetails = async (sdk: OnlinePaymentSdk, cardNumber: string, paymentContext: PaymentContextWithAmount) => {
+    const iinDetailsResponse = await sdk.getIinDetails(cardNumber, paymentContext);
 
     if (iinDetailsResponse.status !== 'SUPPORTED') {
         throw new Error(`Failed getting IinDetails, check your credentials`);
@@ -22,7 +22,7 @@ const getIinDetails = async (session: Session, cardNumber: string, paymentContex
 const isIinDetailsResponse = (
     err: unknown
 ): err is Record<string, unknown> & {
-    status: IinDetailsStatus;
+    status: IinDetailStatus;
 } => {
     return !!(err && typeof err === 'object' && 'status' in err);
 };
@@ -32,12 +32,12 @@ const isIinDetailsResponse = (
  * And throw correct error messages if the promise is rejected
  */
 export const getSupportedIinDetails = async (
-    session: Session,
+    sdk: OnlinePaymentSdk,
     cardNumber: string,
     paymentContext: PaymentContextWithAmount
 ) => {
     try {
-        return await getIinDetails(session, cardNumber, paymentContext);
+        return await getIinDetails(sdk, cardNumber, paymentContext);
     } catch (err) {
         throw new Error(
             isIinDetailsResponse(err)

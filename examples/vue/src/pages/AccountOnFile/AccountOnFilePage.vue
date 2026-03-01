@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef } from 'vue';
+import { computed, onMounted, reactive, ref, shallowRef } from 'vue';
 import {
     type AccountOnFile,
+    init,
+    type OnlinePaymentSdk,
     type PaymentContextWithAmount,
-    PaymentProduct,
-    Session
+    PaymentProduct
 } from 'onlinepayments-sdk-client-js';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 import RouterService from '../../services/RouterService.ts';
 import StorageService from '@shared/services/StorageService';
 import NumberFormatter from '@shared/utilities/NumberFormatter';
@@ -15,71 +16,92 @@ import LoaderService from '../../services/LoaderService.ts';
 import Input from '../../components/FormFields/Input/Input.vue';
 import Logo from '../../components/Logo/Logo.vue';
 import translations from '../../translations/translations.ts';
+import PaymentProductService from '@shared/services/PaymentProductService.ts';
 
 const router = useRouter();
 const { redirectToPage } = RouterService(router);
 
 const cvv = ref('');
 
-const session = shallowRef<Session>();
+const sdk = shallowRef<OnlinePaymentSdk>();
 const paymentContext = shallowRef<PaymentContextWithAmount>();
-const paymentProduct = shallowRef<PaymentProduct>();
+const paymentProduct = shallowRef<PaymentProduct | null>(null);
 const accountOnFile = ref<AccountOnFile>();
 
+const dirtyFields = reactive({
+    cvv: false
+});
+
 const errors = computed(() => ({
-    cvv: handleValidateField('cvv', cvv.value)
+    cvv: dirtyFields.cvv ? handleValidateField('cvv', cvv.value) : false
 }));
 
-const sessionDetails = StorageService.getSession();
+const sessionDetails = StorageService.getSessionData();
 const context = StorageService.getPaymentContext();
-const paymentProductJSON = StorageService.getPaymentProduct();
+const productId = StorageService.getPaymentProductId();
 const accountOnFileId = StorageService.getAccountOnFileId();
 
-onMounted(() => {
+const isLoading = ref(true);
+
+const initData = async () => {
     LoaderService.show();
     if (sessionDetails) {
-        session.value = new Session(sessionDetails);
+        sdk.value = init(sessionDetails);
     }
 
     if (context) {
         paymentContext.value = context;
     }
 
-    if (paymentProductJSON) {
-        paymentProduct.value = new PaymentProduct(paymentProductJSON);
+    if (productId) {
+        paymentProduct.value = await PaymentProductService.getPaymentProduct(
+            sdk.value!,
+            productId,
+            paymentContext.value!
+        );
+    }
+
+    if (!paymentProduct.value) {
+        redirectToPage('/payment');
     }
 
     if (accountOnFileId) {
         if (paymentProduct.value) {
-            accountOnFile.value = paymentProduct?.value?.accountOnFileById?.[accountOnFileId];
+            accountOnFile.value = paymentProduct?.value?.accountsOnFile.find(
+                (aof) => aof.paymentProductId === paymentProduct.value?.id
+            );
         }
     }
 
+    isLoading.value = false;
     LoaderService.hide();
+};
+
+onMounted(() => {
+    initData().catch((error) => console.log(error));
 });
 
 const handleValidateField = (key: string, value: string) => {
     const paymentRequest = PaymentRequestUtility.get(paymentProduct.value, key, value);
 
-    return !!paymentRequest?.getErrorMessageIds().length;
+    return !paymentRequest?.getField(key).validate().isValid;
 };
 
 const getCvvMaskedValue = () => {
     const request = PaymentRequestUtility.get(paymentProduct.value, 'cvv', cvv.value);
-    cvv.value = request?.getMaskedValue('cvv') ?? cvv.value ?? '';
+    cvv.value = request?.getField('cvv').getMaskedValue() ?? cvv.value ?? '';
+    dirtyFields['cvv'] = true;
 };
 
 const getExpiryDateMaskedValue = () => {
     const paymentRequest = PaymentRequestUtility.get(
         paymentProduct.value,
         'expiryDate',
-        accountOnFile?.value?.attributeByKey?.['expiryDate']?.value
+        accountOnFile?.value?.getValue('expiryDate')
     );
 
     return (
-        paymentRequest?.getMaskedValue('expiryDate') ??
-        accountOnFile?.value?.attributeByKey?.['expiryDate']?.value ??
-        ''
+        paymentRequest?.getField('expiryDate').getMaskedValue() ?? accountOnFile?.value?.getValue('expiryDate') ?? ''
     );
 };
 
@@ -92,7 +114,7 @@ const handleSubmit = () => {
 
     paymentRequest?.setAccountOnFile(accountOnFile.value!);
 
-    if (paymentRequest?.isValid() && accountOnFile.value?.id && cvv.value && paymentProduct?.value?.id) {
+    if (paymentRequest?.validate().isValid && accountOnFile.value?.id && cvv.value && paymentProduct?.value?.id) {
         StorageService.setPaymentRequest(paymentRequest);
 
         StorageService.setCardPaymentSpecificData({
@@ -124,19 +146,17 @@ const handleSubmit = () => {
                 {{ paymentContext?.amountOfMoney.currencyCode }}</strong
             >
         </p>
-        <p class="self-start m-0">
-            {{ translations.selected_card_type }} {{ paymentProduct?.json?.displayHints?.label }}
-        </p>
+        <p class="self-start m-0">{{ translations.selected_card_type }} {{ paymentProduct?.label }}</p>
         <RouterLink to="/payment" class="button link self-start">
             {{ translations.back_to_payment_method_selection }}
         </RouterLink>
-        <form class="form" id="paymentDetailsForm" @submit.prevent="handleSubmit">
+        <form :class="{ form: true, 'form-max-height': true, invisible: isLoading }" @submit.prevent="handleSubmit">
             <Input
                 id="card-number"
                 :label="translations.card_number"
                 required
                 disabled
-                :model-value="accountOnFile?.getLabel()?.formattedValue"
+                :model-value="accountOnFile?.label"
             />
             <div class="flex row">
                 <Input
@@ -147,7 +167,7 @@ const handleSubmit = () => {
                     :model-value="getExpiryDateMaskedValue()"
                 />
                 <Input
-                    v-if="paymentProduct?.json?.fields.find((field) => field.id === 'cvv')"
+                    v-if="paymentProduct?.fields.find((field) => field.id === 'cvv')"
                     id="cvv"
                     :label="translations.security_code"
                     required
@@ -162,7 +182,7 @@ const handleSubmit = () => {
                 :label="translations.cardholder_name"
                 required
                 disabled
-                :model-value="accountOnFile?.attributeByKey['cardholderName']?.value"
+                :model-value="accountOnFile?.getValue('cardholderName')"
             />
             <button class="button primary" type="submit">{{ translations.pay_now }}</button>
         </form>

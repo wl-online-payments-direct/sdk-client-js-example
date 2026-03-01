@@ -1,12 +1,10 @@
-import type { PaymentRequest, Session } from 'onlinepayments-sdk-client-js';
+import type { PaymentRequest, OnlinePaymentSdk } from 'onlinepayments-sdk-client-js';
 import StorageService from './StorageService';
 
 const EncryptionService = () => {
-    const encrypt = async (session: Session, paymentRequest: PaymentRequest) => {
-        const encryptor = session.getEncryptor();
-
-        const encryptedString = await encryptor.encrypt(paymentRequest);
-        StorageService.setEncryptedData(encryptedString);
+    const encrypt = async (sdk: OnlinePaymentSdk, paymentRequest: PaymentRequest) => {
+        const encryptedRequest = await sdk.encryptPaymentRequest(paymentRequest);
+        StorageService.setEncryptedData(encryptedRequest.encryptedCustomerInput);
     };
 
     return { encrypt };

@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref, shallowRef } from 'vue';
 import { useRouter } from 'vue-router';
-import { type ErrorResponseJSON, type PaymentContextWithAmount, Session } from 'onlinepayments-sdk-client-js';
+import {
+    type ErrorResponse,
+    init,
+    type OnlinePaymentSdk,
+    type PaymentContextWithAmount
+} from 'onlinepayments-sdk-client-js';
 import { mockApiUrl, useMockApi } from '../../config.ts';
 import StorageService from '@shared/services/StorageService';
 import ApiService from '@shared/services/ApiService';
@@ -16,7 +21,7 @@ type PaymentData = {
     data: string;
 };
 
-const session = shallowRef<Session>();
+const sdk = shallowRef<OnlinePaymentSdk>();
 
 const router = useRouter();
 
@@ -28,12 +33,12 @@ const errorMessage = ref<string>('');
 const paymentRequest = ref<string>(JSON.stringify(StorageService.getPaymentRequest() ?? '', null, 2));
 
 onMounted(() => {
-    const sessionDetails = StorageService.getSession();
+    const sessionDetails = StorageService.getSessionData();
     const context = StorageService.getPaymentContext();
     const cardPaymentSpecificData = StorageService.getCardPaymentSpecificData();
 
     if (sessionDetails) {
-        session.value = new Session(sessionDetails);
+        sdk.value = init(sessionDetails);
     }
 
     if (context) {
@@ -72,10 +77,9 @@ const processPayment = async () => {
         .then((response) => {
             paymentResponse.value = JSON.stringify(response, null, 2);
         })
-        .catch((error: ErrorResponseJSON) => {
+        .catch((error: ErrorResponse) => {
             if (error.errors?.length) {
-                message =
-                    translations.errors_while_fetching_data + error.errors.map((error) => error.message).join(', ');
+                message = translations.errors_while_fetching_data + error.errors.map((err) => err.message).join(', ');
             } else {
                 message = translations.there_was_an_error_fetching_data_did_you_mock_api;
             }

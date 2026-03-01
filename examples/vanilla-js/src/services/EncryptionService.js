@@ -7,14 +7,12 @@ const EncryptionService = () => {
     /**
      * Encrypts the request.
      *
-     * @param {sdk.Session} session
+     * @param {sdk.OnlinePaymentSdk} sdkClient
      * @param {sdk.PaymentRequest} paymentRequest
      */
-    const encrypt = (session, paymentRequest) => {
-        const encryptor = session.getEncryptor();
-        return encryptor.encrypt(paymentRequest).then((encryptedString) => {
-            StorageService.setEncryptedData(encryptedString);
-        });
+    const encrypt = async (sdkClient, paymentRequest) => {
+        const encryptedRequest = await sdkClient.encryptPaymentRequest(paymentRequest);
+        StorageService.setEncryptedData(encryptedRequest.encryptedCustomerInput);
     };
 
     return { encrypt };

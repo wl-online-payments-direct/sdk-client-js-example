@@ -12,6 +12,7 @@ import { productGuard } from './guards/product-guard';
 import { dataGuard } from './guards/data-guard';
 import { accountOnFileGuard } from './guards/account-on-file-guard';
 import { PageLayout } from './components/layout/page-layout/page-layout';
+import { contextGuard } from './guards/context-guard';
 
 const routes: Routes = [
   {
@@ -31,22 +32,22 @@ const routes: Routes = [
           {
             path: 'payment/credit-card',
             component: CreditCardPage,
-            canActivate: [sessionGuard, productGuard],
+            canActivate: [sessionGuard, contextGuard, productGuard],
           },
           {
             path: 'payment/account-on-file',
             component: AccountOnFilePage,
-            canActivate: [sessionGuard, productGuard, accountOnFileGuard],
+            canActivate: [sessionGuard, contextGuard, productGuard, accountOnFileGuard],
           },
           {
             path: 'payment/finalize',
             component: FinalizePaymentPage,
-            canActivate: [sessionGuard, productGuard, dataGuard],
+            canActivate: [sessionGuard, contextGuard, productGuard, dataGuard],
           },
           {
             path: 'payment/google-pay',
             component: GooglePayPage,
-            canActivate: [sessionGuard, productGuard],
+            canActivate: [sessionGuard, contextGuard, productGuard],
           },
         ],
       },

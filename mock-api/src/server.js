@@ -64,12 +64,11 @@ const baseUrl = process.env.API_URL || 'localhost';
 const port = Number(process.env.API_PORT || 5777);
 const apiUrl = `https://${baseUrl}:${port}/`;
 
-// server
-//     .listen(port, baseUrl, () => {
-//         console.log('API URL ' + apiUrl);
-//         delay && console.log(`API responses will be delayed for ${delay}ms.`);
-//         with400 && console.log(`20% of API responses will result in error 400.`);
-//     });
+// server.listen(port, baseUrl, () => {
+//     console.log('API URL ' + apiUrl);
+//     delay && console.log(`API responses will be delayed for ${delay}ms.`);
+//     with400 && console.log(`20% of API responses will result in error 400.`);
+// });
 https
     .createServer(
         {

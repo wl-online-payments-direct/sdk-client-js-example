@@ -35,6 +35,17 @@
     }
 }
 
+.form-max-height {
+    overflow: hidden;
+    max-height: 600px;
+    transition: all 0.1s linear;
+}
+
+.form-max-height.invisible{
+    max-height: 0;
+    padding: 0;
+}
+
 input:not([type='checkbox']),
 textarea,
 select {

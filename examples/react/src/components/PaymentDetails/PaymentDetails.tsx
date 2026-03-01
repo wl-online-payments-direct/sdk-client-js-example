@@ -1,6 +1,6 @@
 import { type FormEvent, memo } from 'react';
 import './index.css';
-import type { AmountOfMoneyJSON, PaymentContextWithAmount } from 'onlinepayments-sdk-client-js';
+import type { AmountOfMoney, PaymentContext, PaymentContextWithAmount } from 'onlinepayments-sdk-client-js';
 import Input from '../FormFields/Input/Input.tsx';
 import Select from '../FormFields/Select/Select.tsx';
 import Checkbox from '../FormFields/Checkbox/Checkbox.tsx';
@@ -9,13 +9,10 @@ import currencies from '@shared/constants/currencies';
 import translations from '../../translations/translations.ts';
 
 type Props = {
-    paymentContext?: PaymentContextWithAmount;
+    paymentContext?: PaymentContext;
     isFormExpanded?: boolean;
     onExpandCollapse?: () => void;
-    onChangeContextModel?: <K extends keyof PaymentContextWithAmount>(
-        value: PaymentContextWithAmount[K],
-        prop: K
-    ) => void;
+    onChangeContextModel?: <K extends keyof PaymentContextWithAmount>(value: PaymentContext[K], prop: K) => void;
     onSaveContextToStorage?: (paymentContext: PaymentContextWithAmount) => void;
 };
 
@@ -36,8 +33,8 @@ const PaymentDetails = ({
             paymentContext?.amountOfMoney?.amount
         ) {
             const newPaymentContext: PaymentContextWithAmount = {
-                ...(paymentContext as PaymentContextWithAmount),
-                amountOfMoney: { ...paymentContext.amountOfMoney } as AmountOfMoneyJSON
+                ...(paymentContext as PaymentContext),
+                amountOfMoney: { ...paymentContext.amountOfMoney, amount: paymentContext.amountOfMoney.amount }
             };
 
             onSaveContextToStorage?.(newPaymentContext);
@@ -69,7 +66,7 @@ const PaymentDetails = ({
                             {
                                 ...paymentContext?.amountOfMoney,
                                 amount: value ? Number(value) : undefined
-                            } as AmountOfMoneyJSON,
+                            } as AmountOfMoney,
                             'amountOfMoney'
                         )
                     }
@@ -96,7 +93,7 @@ const PaymentDetails = ({
                             {
                                 ...paymentContext?.amountOfMoney,
                                 currencyCode: value
-                            } as AmountOfMoneyJSON,
+                            } as AmountOfMoney,
                             'amountOfMoney'
                         )
                     }

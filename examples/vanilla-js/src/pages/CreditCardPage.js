@@ -2,12 +2,14 @@
 import * as sdk from 'onlinepayments-sdk-client-js';
 import Logo from '../components/Logo.js';
 import StorageService from '../services/StorageService.js';
+import ErrorService from '../services/ErrorService.js';
 import Pages from '../constants/pages.js';
 import FormField from '../components/FormField.js';
 import Loader from '../components/Loader.js';
 import NumberFormatter from '../utilities/NumberFormatter.js';
 import PaymentRequestUtility from '../utilities/PaymentRequestUtility.js';
 import EncryptionService from '../services/EncryptionService.js';
+import PaymentProductService from '@javascript-sdk-example/shared/services/PaymentProductService';
 
 /**
  * A credit card page.
@@ -24,8 +26,8 @@ const CreditCardPage = () => {
     /** @type HTMLFormElement */
     let form;
 
-    /** @type sdk.Session */
-    let session;
+    /** @type sdk.OnlinePaymentSdk */
+    let sdkClient;
 
     /**
      * Gets the HTML Input element with the provided ID.
@@ -49,13 +51,13 @@ const CreditCardPage = () => {
                 ${Logo.render()}
                 <h1 class="m-0">Pay with a credit card</h1>
                 <p class="self-start m-0"><strong>Total amount: ${NumberFormatter.formatAmount(paymentDetails.amountOfMoney)} ${paymentDetails.amountOfMoney.currencyCode}</strong></p>
-                <p class="self-start m-0">Selected card type: ${paymentProduct.json.displayHints.label}</p>
+                <p class="self-start m-0">Selected card type: ${paymentProduct?.label}</p>
                 <a href="${Pages.Payment}" class="button link self-start">← Back to payment method selection</a>
-                <form class="form" id="creditCardForm">
+                <form class="form" id="creditCardForm" >
                     ${FormField.getInputField('Card number', 'cardNumber', 'text', true)}
                     <div class="flex row">
                         ${FormField.getInputField('Expiry date', 'expiryDate', 'text', true)}
-                        ${paymentProduct.json.fields.find((f) => f.id === 'cvv') ? FormField.getInputField('Security code', 'cvv', 'number', true, { step: 1 }) : ''}
+                        ${paymentProduct?.fields?.find((f) => f.id === 'cvv') ? FormField.getInputField('Security code', 'cvv', 'number', true, { step: 1 }) : ''}
                     </div>
                     ${FormField.getInputField('Cardholder name', 'cardholderName', 'text', true)}
                     ${paymentProduct?.allowsTokenization ? FormField.getCheckboxField('Remember card for later use', 'tokenize', false) : ''}
@@ -91,18 +93,18 @@ const CreditCardPage = () => {
             // add formatting on input
             elem?.addEventListener('input', () => {
                 const paymentRequest = PaymentRequestUtility.get(paymentProduct, key, elem.value);
-                elem.value = paymentRequest.getMaskedValue(key);
+                elem.value = paymentRequest.getField(key).getMaskedValue() ?? elem.value;
             });
             // add validation on change
             elem?.addEventListener('change', () => {
                 const paymentRequest = PaymentRequestUtility.get(paymentProduct, key, elem.value);
-                if (paymentRequest.getErrorMessageIds().length) {
+                if (!paymentRequest.getField(key).validate().isValid) {
                     elem.classList.add('error');
                 } else {
                     elem.classList.remove('error');
                     if (key === 'cardNumber' && elem.value.length > 5) {
                         getIinDetails(elem.value).then((details) => {
-                            if (!details || details.paymentProductId !== paymentProduct.id) {
+                            if (!details || details.paymentProductId !== paymentProduct?.id) {
                                 elem.classList.add('error');
                             }
                         });
@@ -116,10 +118,10 @@ const CreditCardPage = () => {
      * Gets IIN details for the provider partial card number.
      *
      * @param {string} cardNumber
-     * @returns {Promise<sdk.GetIINDetailsResponseJSON | null>}
+     * @returns {Promise<sdk.IinDetailsResponse | null>}
      */
     const getIinDetails = (cardNumber) => {
-        return session
+        return sdkClient
             .getIinDetails(cardNumber.replaceAll(' ', '').trim(), StorageService.getPaymentContext())
             .catch(() => null);
     };
@@ -142,16 +144,16 @@ const CreditCardPage = () => {
             form.elements[key]?.value && paymentRequest.setValue(key, form.elements[key]?.value);
         });
 
-        if (paymentRequest.isValid()) {
+        if (paymentRequest.validate().isValid) {
             const cardNumberInput = getInput('cardNumber');
             // check iin details for a correct card type for the selected payment product.
             getIinDetails(cardNumberInput.value)
                 .then((details) => {
-                    if (details?.paymentProductId !== paymentProduct.id) {
+                    if (details?.paymentProductId !== paymentProduct?.id) {
                         throw Error('Wrong card type');
                     }
 
-                    EncryptionService.encrypt(session, paymentRequest)
+                    EncryptionService.encrypt(sdkClient, paymentRequest)
                         .then(() => {
                             StorageService.setPaymentRequest(paymentRequest);
                             window.location.href = Pages.Finalize;
@@ -163,7 +165,7 @@ const CreditCardPage = () => {
                 .catch(() => {
                     cardNumberInput.classList.add('error');
                     document.getElementById('error').innerHTML =
-                        `Entered card number is not for ${paymentProduct.json.displayHints.label}.`;
+                        `Entered card number is not for ${paymentProduct?.label}.`;
                 });
         }
     };
@@ -203,7 +205,7 @@ const CreditCardPage = () => {
         const container = document.getElementById('conversionResult');
         const errorPlaceholder = document.getElementById('errorCurrencyConversion');
         container.innerHTML = '';
-        session
+        sdkClient
             .getCurrencyConversionQuote(context.amountOfMoney, {
                 partialCreditCardNumber: cardNumber,
                 paymentProductId: paymentProduct.id
@@ -218,9 +220,11 @@ const CreditCardPage = () => {
                 }
             })
             .catch((response) => {
-                if (response.errors?.length) {
-                    response.errors.forEach((error) => {
-                        errorPlaceholder.innerHTML += `<div class="text">${error.message}</div>`;
+                const errorMessages = ErrorService.extractErrorMessages(response);
+
+                if (errorMessages?.length) {
+                    errorMessages.forEach((error) => {
+                        errorPlaceholder.innerHTML += `<div class="text">${error}</div>`;
                     });
 
                     errorPlaceholder.style.display = 'block';
@@ -266,7 +270,7 @@ const CreditCardPage = () => {
         const container = document.getElementById('surchargeResult');
         const errorPlaceholder = document.getElementById('errorSurcharge');
         container.innerHTML = '';
-        session
+        sdkClient
             .getSurchargeCalculation(context.amountOfMoney, {
                 partialCreditCardNumber: cardNumber,
                 paymentProductId: paymentProduct.id
@@ -281,10 +285,13 @@ const CreditCardPage = () => {
                 }
             })
             .catch((response) => {
-                if (response.errors?.length) {
-                    response.errors.forEach((error) => {
-                        errorPlaceholder.innerHTML += `<div class="text">${error.message}</div>`;
+                const errorMessages = ErrorService.extractErrorMessages(response);
+
+                if (errorMessages?.length) {
+                    errorMessages.forEach((error) => {
+                        errorPlaceholder.innerHTML += `<div class="text">${error}</div>`;
                     });
+
                     errorPlaceholder.style.display = 'block';
                 }
             })
@@ -301,9 +308,19 @@ const CreditCardPage = () => {
      */
     const init = async (mountingPoint) => {
         Loader.show();
+
+        sdkClient = sdk.init(StorageService.getSessionData());
         const context = StorageService.getPaymentContext();
-        paymentProduct = StorageService.getPaymentProduct();
-        session = StorageService.getSession();
+
+        paymentProduct = await PaymentProductService.getPaymentProduct(
+            sdkClient,
+            StorageService.getPaymentProductId(),
+            context
+        ).catch((error) => console.error(error));
+
+        if (!paymentProduct) {
+            window.location = Pages.Payment;
+        }
 
         mountingPoint.innerHTML = getTemplate(context);
         form = document.getElementById('creditCardForm');
@@ -312,6 +329,7 @@ const CreditCardPage = () => {
         setValidatorsAndFormatters();
         setupCurrencyConversion();
         setupSurchargeCalculation();
+
         Loader.hide();
     };
 
@@ -322,9 +340,9 @@ const CreditCardPage = () => {
      * @returns {Promise<void>}
      */
     const mount = (mountingPoint) => {
-        if (!StorageService.getSession()) {
+        if (!StorageService.getSessionData()) {
             window.location = Pages.Home;
-        } else if (!StorageService.getPaymentProduct()) {
+        } else if (!StorageService.getPaymentProductId() || !StorageService.getPaymentContext()) {
             window.location = Pages.Payment;
         } else {
             return init(mountingPoint);
