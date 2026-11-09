@@ -1,11 +1,14 @@
 {
     "name": "javascript-sdk-example",
-    "version": "4.1.2",
+    "version": "4.2.0",
     "description": "Online Payments JavaScript SDK example apps",
     "repository": "git@github.com:Online-Payments/sdk-client-js-example",
     "author": "Online Payments",
     "license": "MIT",
     "private": true,
+    "engines": {
+        "node": ">=22.17"
+    },
     "workspaces": [
         "shared",
         "examples/react",
@@ -24,6 +27,17 @@
         "prettier": "^3.8.1"
     },
     "dependencies": {
-        "onlinepayments-sdk-client-js": "^4.1.2"
+        "onlinepayments-sdk-client-js": "^4.3.1"
+    },
+    "resolutions": {
+        "**/uuid": "^11.1.1",
+        "**/eslint/minimatch": "^11.0.5",
+        "**/@eslint/config-array/minimatch": "^11.0.5",
+        "**/@typescript-eslint/typescript-estree/minimatch": "^11.0.5",
+        "**/nodemon/minimatch": "^11.0.5",
+        "**/ignore-walk/minimatch": "^11.0.5",
+        "**/@tufjs/models/minimatch": "^11.0.5",
+        "**/cacache/glob": "^14.0.2",
+        "**/@npmcli/package-json/glob": "^14.0.2"
     }
 }

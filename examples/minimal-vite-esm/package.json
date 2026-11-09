@@ -1,6 +1,6 @@
 {
     "name": "onlinepayments-sdk-client-js-example-vite-esm",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "type": "module",
     "private": true,
     "main": "index.html",
@@ -10,6 +10,6 @@
     "devDependencies": {
         "prettier": "^3.8.1",
         "typescript": "^5.9.3",
-        "vite": "^7.3.1"
+        "vite": "^7.3.7"
     }
 }

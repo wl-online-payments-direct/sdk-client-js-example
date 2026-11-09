@@ -10,7 +10,7 @@ A simple webserver is included to make this application easy to install and run 
 
 ## How to install
 
-Make sure you have installed [Node.js](https://nodejs.org/en/); the LTS version is recommended and yarn package manager.
+Make sure you have installed [Node.js](https://nodejs.org/en/); version 22.17 or newer is required (LTS recommended) and yarn package manager.
 Run
 
 ```bash

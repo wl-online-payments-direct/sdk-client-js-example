@@ -95,7 +95,10 @@ export class FinalizePaymentPage {
         ...this.paymentContext,
         ...(StorageService.getCardPaymentSpecificData()
           ? { ...StorageService.getCardPaymentSpecificData()! }
-          : { data: StorageService.getEncryptedData()! }),
+          : {
+              data: StorageService.getEncryptedData()!,
+              paymentProductId: Number(StorageService.getPaymentProductId()),
+            }),
       })
       .then((response) => {
         this.paymentResponse.set(JSON.stringify(response, null, 2));

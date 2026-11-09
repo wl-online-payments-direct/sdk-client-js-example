@@ -140,7 +140,7 @@ const CreditCardPage = () => {
             if (prop === 'cardNumber' && value.length > 5) {
                 getIinDetails?.(value)?.then((details) => {
                     if (!details || details.paymentProductId !== paymentProduct?.id) {
-                        hasError = true;
+                        setModelErrors((prev) => ({ ...prev, cardNumber: true }));
                     }
                 });
             }

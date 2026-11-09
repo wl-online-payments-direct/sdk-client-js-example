@@ -100,7 +100,10 @@ const FinalizePaymentPage = () => {
                 ...paymentContext,
                 ...((StorageService.getCardPaymentSpecificData() && StorageService.getAccountOnFileId()
                     ? { ...StorageService.getCardPaymentSpecificData() }
-                    : { data: StorageService.getEncryptedData() }) as EncryptedData)
+                    : {
+                          data: StorageService.getEncryptedData(),
+                          paymentProductId: Number(StorageService.getPaymentProductId())
+                      }) as EncryptedData)
             })
             .then((response) => {
                 setPaymentResponse(JSON.stringify(response, null, 2));

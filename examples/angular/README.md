@@ -9,7 +9,7 @@ The Online Payments Angular Client SDK is used for all communication to the Onli
 
 ## How to install
 
-Make sure you have installed [Node.js](https://nodejs.org/en/); the LTS version is recommended and yarn package manager. Run
+Make sure you have installed [Node.js](https://nodejs.org/en/); version 22.17 or newer is required (LTS recommended) and yarn package manager. Run
 
 ```bash
 yarn

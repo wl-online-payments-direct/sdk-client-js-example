@@ -12,7 +12,7 @@
 import selfSigned from 'selfsigned';
 import fs from 'fs';
 
-export const setup = () => {
+export const setup = async () => {
     // server certificate
     if (!fs.existsSync('./cert/cert.key')) {
         if (!fs.existsSync('./cert')) {
@@ -20,9 +20,10 @@ export const setup = () => {
         }
 
         const attrs = [{ name: 'commonName', value: 'localhost' }];
-        const options = { days: 365, selfSigned: true, keySize: 4096 };
+        // Valid for 365 days (selfsigned default).
+        const options = { keySize: 4096, algorithm: 'sha256' };
 
-        const keys = selfSigned.generate(attrs, options);
+        const keys = await selfSigned.generate(attrs, options);
 
         fs.writeFileSync('./cert/cert.pem', keys.cert);
         fs.writeFileSync('./cert/cert.key', keys.private);

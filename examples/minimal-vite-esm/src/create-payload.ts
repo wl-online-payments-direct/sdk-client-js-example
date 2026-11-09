@@ -31,13 +31,7 @@ export async function createPayload(
     paymentRequest.setValue('cardNumber', cardNumber);
     paymentRequest.setValue('cvv', '123');
     paymentRequest.setValue('cardholderName', 'John Doe');
-    paymentRequest.setValue(
-        'expiryDate',
-        Intl.DateTimeFormat('en-US', {
-            month: '2-digit',
-            year: '2-digit'
-        }).format(new Date())
-    );
+    paymentRequest.setValue('expiryDate', `12/${new Date().getFullYear() + 5}`);
 
     // validate payment request
     const validationResult = paymentRequest.validate();

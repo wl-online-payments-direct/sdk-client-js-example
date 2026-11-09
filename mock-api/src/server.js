@@ -19,7 +19,7 @@ import config from './config.js';
 import { setRoutes } from './routes.js';
 
 dotenv.config();
-config.setup();
+await config.setup();
 
 const keyFile = path.resolve('./cert/cert.key');
 const certFile = path.resolve('./cert/cert.pem');

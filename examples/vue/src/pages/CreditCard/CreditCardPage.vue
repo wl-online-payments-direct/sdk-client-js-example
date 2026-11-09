@@ -10,7 +10,7 @@
  * Please contact Worldline for questions regarding license and user rights.
  */
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, shallowRef } from 'vue';
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import {
     init,
     type OnlinePaymentSdk,
@@ -103,8 +103,31 @@ const dirtyFields = reactive({
     expiryDate: false
 });
 
+const cardNumberIinMismatch = ref(false);
+
+watch(
+    () => creditCardPaymentModel.cardNumber,
+    (value) => {
+        cardNumberIinMismatch.value = false;
+
+        if (value.length <= 5 || handleValidateField('cardNumber', value)) {
+            return;
+        }
+
+        getIinDetails(value)?.then((details) => {
+            if (value !== creditCardPaymentModel.cardNumber) {
+                return;
+            }
+
+            cardNumberIinMismatch.value = !details || details.paymentProductId !== paymentProduct.value?.id;
+        });
+    }
+);
+
 const errors = computed(() => ({
-    cardNumber: dirtyFields.cardNumber ? handleValidateField('cardNumber', creditCardPaymentModel.cardNumber) : false,
+    cardNumber: dirtyFields.cardNumber
+        ? handleValidateField('cardNumber', creditCardPaymentModel.cardNumber) || cardNumberIinMismatch.value
+        : false,
     cvv: dirtyFields.cvv ? handleValidateField('cvv', creditCardPaymentModel.cvv) : false,
     cardholderName: dirtyFields.cardholderName
         ? handleValidateField('cardholderName', creditCardPaymentModel.cardholderName)
@@ -114,22 +137,8 @@ const errors = computed(() => ({
 
 const handleValidateField = (key: string, value: string) => {
     const paymentRequest = PaymentRequestUtility.get(paymentProduct.value, key, value);
-    let hasError = false;
 
-    if (!paymentRequest?.getField(key).validate().isValid) {
-        hasError = true;
-    } else {
-        hasError = false;
-        if (key === 'cardNumber' && value.length > 5) {
-            getIinDetails?.(value)?.then((details) => {
-                if (!details || details.paymentProductId !== paymentProduct?.value?.id) {
-                    hasError = true;
-                }
-            });
-        }
-    }
-
-    return hasError;
+    return !paymentRequest?.getField(key).validate().isValid;
 };
 
 const handleMask = <K extends keyof CardPaymentModel>(key: K, value?: string) => {

@@ -85,7 +85,10 @@ const FinalizePaymentPage = () => {
             ...payment,
             ...(StorageService.getCardPaymentSpecificData() && StorageService.getAccountOnFileId()
                 ? { ...StorageService.getCardPaymentSpecificData() }
-                : { data: StorageService.getEncryptedData() })
+                : {
+                      data: StorageService.getEncryptedData(),
+                      paymentProductId: Number(StorageService.getPaymentProductId())
+                  })
         })
             .then((response) => {
                 apiResponsePlaceholder.style.display = 'block';

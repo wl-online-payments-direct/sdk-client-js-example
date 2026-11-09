@@ -83,7 +83,10 @@ const processPayment = async () => {
             ...paymentContext.value,
             ...((StorageService.getCardPaymentSpecificData()
                 ? ({ ...StorageService.getCardPaymentSpecificData() } as CardPaymentSpecificData)
-                : { data: StorageService.getEncryptedData() }) as EncryptedData)
+                : {
+                      data: StorageService.getEncryptedData(),
+                      paymentProductId: Number(StorageService.getPaymentProductId())
+                  }) as EncryptedData)
         })
         .then((response) => {
             paymentResponse.value = JSON.stringify(response, null, 2);

@@ -9,7 +9,7 @@ The Online Payments SDK is used for all communication to the Online Payments API
 
 ### How to install
 
-Make sure you have installed [Node.js](https://nodejs.org/en/); the LTS version is recommended. Run
+Make sure you have installed [Node.js](https://nodejs.org/en/); version 22.17 or newer is required (LTS recommended). Run
 
 ```bash
 npm install

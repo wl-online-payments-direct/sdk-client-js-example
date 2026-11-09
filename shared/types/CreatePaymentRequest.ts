@@ -13,6 +13,7 @@ import type { PaymentContextWithAmount } from 'onlinepayments-sdk-client-js';
 
 export type EncryptedData = {
     data: string;
+    paymentProductId: number;
 };
 
 export type CardPaymentSpecificData = {

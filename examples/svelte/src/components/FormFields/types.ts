@@ -10,14 +10,14 @@
  * Please contact Worldline for questions regarding license and user rights.
  */
 export type FieldAttributes = {
-    className?: string;
-    step?: string;
-    [key: string]: string | number | boolean | undefined;
+	className?: string;
+	step?: string;
+	[key: string]: string | number | boolean | undefined;
 };
 
 export type Base = {
-    id: string;
-    label?: string;
-    disabled?: boolean;
-    fieldAttrs?: FieldAttributes;
+	id: string;
+	label?: string;
+	disabled?: boolean;
+	fieldAttrs?: FieldAttributes;
 };

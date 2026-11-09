@@ -105,6 +105,9 @@ export const processPayment = (req, res) => {
 
     if (req.body.data) {
         paymentData.encryptedCustomerInput = req.body.data;
+        paymentData.cardPaymentMethodSpecificInput = {
+            paymentProductId: req.body.paymentProductId
+        };
     } else if (req.body.token) {
         paymentData.cardPaymentMethodSpecificInput = {
             token: req.body.token,
